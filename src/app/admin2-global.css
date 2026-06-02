@@ -1,4 +1,6 @@
 @import "tailwindcss";
+
+/* Bạn có thể thêm các custom layer ở đây nếu cần */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
