@@ -10,17 +10,18 @@ export default function ProductsPage() {
 
   return (
     <div className="bg-app-bg min-h-screen p-4 md:p-8">
-        {/* Breadcrumb - Thêm mới để giống 100% */}
-        <div className="text-sm text-gray-400 mb-6 flex items-center gap-1 overflow-x-auto whitespace-nowrap">
+
+      {/* Container: Sử dụng flex-col trên mobile, flex-row trên desktop */}
+      <div className="container mx-auto flex flex-col lg:flex-row gap-8 flex-wrap">
+        
+        {/* Breadcrumb - Đã di chuyển vào trong container và chiếm trọn 100% chiều rộng để không bị lệch */}
+        <div className="w-full text-sm text-gray-400 mb-2 flex items-center gap-1 overflow-x-auto whitespace-nowrap">
           <span className="hover:text-gray-600 cursor-pointer">Trang chủ</span>
           <span>›</span>
           <span className="hover:text-gray-600 cursor-pointer">Điện thoại</span>
           <span>›</span>
           <span className="text-gray-700 font-medium">iPhone</span>
         </div>
-
-      {/* Container: Sử dụng flex-col trên mobile, flex-row trên desktop */}
-      <div className="container mx-auto flex flex-col lg:flex-row gap-8">
         
         {/* Bổ sung: Nút mở bộ lọc trên mobile */}
         <button 
