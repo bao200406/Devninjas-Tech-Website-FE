@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
+import { NotebookPen } from "lucide-react";
 import {
   CreditCard,
   Landmark,
@@ -8,25 +10,20 @@ import {
   Truck,
   Zap,
   BadgeDollarSign,
+  RotateCcw,
+  Headset,
 } from "lucide-react";
 
 export default function CheckoutPage() {
+  const [paymentMethod, setPaymentMethod] = useState("cod");
   return (
     <div className="min-h-screen bg-[#f5f5f7] px-4 py-6">
       <div className="mx-auto max-w-[1180px]">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="rounded bg-[#0078D4] px-2 py-1 text-sm font-bold text-white">
-            A
-          </div>
 
-          <h1 className="text-[22px] font-semibold text-[#0078D4]">
-            Azure Logic
-          </h1>
         </div>
-
-        <p className="text-sm text-gray-500">Thanh toán an toàn</p>
       </div>
 
       {/* Content */}
@@ -34,7 +31,7 @@ export default function CheckoutPage() {
         {/* LEFT */}
         <div className="space-y-6">
           {/* Receiver Info */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="rounded-xl p-5">
             <div className="mb-5 flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
                 1
@@ -48,7 +45,7 @@ export default function CheckoutPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm text-gray-600">
-                  Họ và tên
+                  HỌ VÀ TÊN
                 </label>
 
                 <input
@@ -61,7 +58,7 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm text-gray-600">
-                    Số điện thoại
+                    SỐ ĐIỆN THOẠI
                   </label>
 
                   <input
@@ -73,7 +70,7 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="mb-2 block text-sm text-gray-600">
-                    Email
+                    EMAIL
                   </label>
 
                   <input
@@ -85,18 +82,30 @@ export default function CheckoutPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <select className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none">
-                  <option>Hồ Chí Minh</option>
+                <select
+                  aria-label="Tỉnh hoặc thành phố"
+                  name="city"
+                  defaultValue=""
+                  className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none"
+                >
+                  <option value="">Chọn tỉnh/thành</option>
+                  <option value="ho_chi_minh">Hồ Chí Minh</option>
                 </select>
 
-                <select className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none">
-                  <option>Phường Đa Kao</option>
+                <select
+                  aria-label="Phường hoặc xã"
+                  name="ward"
+                  defaultValue=""
+                  className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none"
+                >
+                  <option value="">Chọn phường/xã</option>
+                  <option value="da_kao">Phường Đa Kao</option>
                 </select>
               </div>
 
               <div>
                 <label className="mb-2 block text-sm text-gray-600">
-                  Địa chỉ cụ thể
+                  ĐỊA CHỈ CỤ THỂ
                 </label>
 
                 <input
@@ -109,7 +118,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Shipping */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="rounded-xl  ">
             <div className="mb-5 flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
                 2
@@ -160,48 +169,89 @@ export default function CheckoutPage() {
           </div>
 
           {/* Payment */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
-                3
-              </div>
-
-              <h2 className="text-[15px] font-semibold text-gray-800">
-                Phương thức thanh toán
-              </h2>
+          <div className="rounded-xl">
+          <div className="mb-5 flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
+              3
             </div>
 
-            <div className="space-y-3">
-              <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-[#005BAC] bg-[#f8fbff] p-4">
-                <input type="radio" checked readOnly />
-
-                <CreditCard size={18} />
-
-                <span className="font-medium">
-                  Thanh toán khi nhận hàng (COD)
-                </span>
-              </label>
-
-              <label className="flex cursor-pointer items-center gap-3 rounded-lg border p-4">
-                <input type="radio" />
-
-                <Landmark size={18} />
-
-                <span>Chuyển khoản</span>
-              </label>
-
-              <label className="flex cursor-pointer items-center gap-3 rounded-lg border p-4">
-                <input type="radio" />
-
-                <CreditCard size={18} />
-
-                <span>Thẻ Visa / Mastercard</span>
-              </label>
-            </div>
+            <h2 className="text-[15px] font-semibold text-gray-800">
+              Phương thức thanh toán
+            </h2>
           </div>
 
+          <div className="space-y-3">
+
+            {/* COD */}
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
+                paymentMethod === "cod"
+                  ? "border-[#005BAC] bg-[#f8fbff]"
+                  : "border-gray-300 bg-white"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment"
+                value="cod"
+                checked={paymentMethod === "cod"}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              />
+
+              <CreditCard size={18} />
+
+              <span className="font-medium">
+                Thanh toán khi nhận hàng (COD)
+              </span>
+            </label>
+
+            {/* Bank */}
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
+                paymentMethod === "bank"
+                  ? "border-[#005BAC] bg-[#f8fbff]"
+                  : "border-gray-300 bg-white"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment"
+                value="bank"
+                checked={paymentMethod === "bank"}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              />
+
+              <Landmark size={18} />
+
+              <span>Chuyển khoản</span>
+            </label>
+
+            {/* Visa */}
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
+                paymentMethod === "visa"
+                  ? "border-[#005BAC] bg-[#f8fbff]"
+                  : "border-gray-300 bg-white"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment"
+                value="visa"
+                checked={paymentMethod === "visa"}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              />
+
+              <CreditCard size={18} />
+
+              <span>Thẻ Visa / Mastercard</span>
+            </label>
+          </div>
+        </div>
+
           {/* Note */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="rounded-xl">
+            
             <h2 className="mb-4 text-[15px] font-semibold text-gray-800">
               Ghi chú đơn hàng
             </h2>
@@ -215,7 +265,7 @@ export default function CheckoutPage() {
         </div>
 
         {/* RIGHT */}
-        <div className="h-fit rounded-xl border bg-white p-5 shadow-sm">
+        <div className="h-fit rounded-xl">
           <h2 className="mb-5 text-lg font-semibold text-gray-800">
             Tóm tắt đơn hàng
           </h2>
@@ -257,10 +307,10 @@ export default function CheckoutPage() {
             <input
               type="text"
               placeholder="Mã giảm giá / Voucher"
-              className="flex-1 rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none"
+              className="flex-1 rounded-lg border border-gray-300 bg-[#CCCCCC] px-4 py-3 outline-none"
             />
 
-            <button className="rounded-lg bg-[#005BAC] px-5 font-medium text-white">
+            <button className="rounded-lg bg-[#336699] px-5 font-medium text-white">
               Áp dụng
             </button>
           </div>
@@ -274,12 +324,12 @@ export default function CheckoutPage() {
 
             <div className="flex items-center justify-between text-gray-500">
               <span>Phí vận chuyển</span>
-              <span className="text-green-600">Miễn phí</span>
+              <span className="text-blue-600">Miễn phí</span>
             </div>
 
             <div className="flex items-center justify-between text-gray-500">
               <span>Giảm giá</span>
-              <span>-500.000đ</span>
+              <span className="text-[#663300]">-500.000đ</span>
             </div>
 
             <div className="flex items-center justify-between border-t pt-4 text-lg font-bold">
@@ -297,17 +347,17 @@ export default function CheckoutPage() {
           <div className="mt-6 grid grid-cols-3 gap-3 text-center text-xs text-gray-500">
             <div className="flex flex-col items-center gap-1">
               <ShieldCheck size={18} />
-              <span>Bảo mật SSL</span>
+              <span>BẢO MẬT SSL</span>
             </div>
 
             <div className="flex flex-col items-center gap-1">
-              <Truck size={18} />
-              <span>20 ngày hoàn trả</span>
+              <RotateCcw size={18} />
+              <span>30 NGÀY HOÀN TRẢ</span>
             </div>
 
             <div className="flex flex-col items-center gap-1">
-              <CreditCard size={18} />
-              <span>Hỗ trợ 24/7</span>
+              <Headset size={18} />
+              <span>HỖ TRỢ 24/7</span>
             </div>
           </div>
         </div>
