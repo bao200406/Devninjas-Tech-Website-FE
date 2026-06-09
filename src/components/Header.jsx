@@ -6,7 +6,7 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-100">
       {/* Tầng trên: Logo, Tìm kiếm, Icons */}
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4 ">
         {/* Logo */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
