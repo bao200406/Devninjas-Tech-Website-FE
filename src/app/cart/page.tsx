@@ -1,7 +1,12 @@
-import Image from "next/image"
+"use client";
+
+import Image from "next/image";
+import { Trash2, Check } from "lucide-react";
+import { useState } from "react";
 
 
-const products = [
+
+const initialProducts = [
   {
     id: 1,
     name: "iPhone 15 Pro Max 256GB",
@@ -10,6 +15,8 @@ const products = [
     oldPrice: 36990000,
     image:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzWCsCB1Uj4bVxc6OdywKG5aP8LNVQo2BiDgIHsWJS3A&s=10",
+    quantity: 1,
+    selected: true,
   },
   {
     id: 2,
@@ -19,6 +26,8 @@ const products = [
     oldPrice: 22990000,
     image:
       "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300",
+    quantity: 1,
+    selected: true,
   },
   {
     id: 3,
@@ -28,11 +37,87 @@ const products = [
     oldPrice: 6990000,
     image:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBKx0_XqtXDyzaYLolXjMCzlZgDF0MM0juthDGe0P6tw&s=10",
+    quantity: 1,
+    selected: true,
   },
 ];
 
+
 export default function CartPage() {
-  const total = products.reduce((sum, item) => sum + item.price, 0);
+  const [products, setProducts] = useState(initialProducts);
+  const allSelected =
+  products.length > 0 &&
+  products.every((item) => item.selected);
+
+const toggleSelectAll = () => {
+  setProducts(
+    products.map((item) => ({
+      ...item,
+      selected: !allSelected,
+    }))
+  );
+};
+
+const toggleProduct = (id: number) => {
+  setProducts(
+    products.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            selected: !item.selected,
+          }
+        : item
+    )
+  );
+};
+
+const increaseQty = (id: number) => {
+  setProducts(
+    products.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            quantity: item.quantity + 1,
+          }
+        : item
+    )
+  );
+};
+
+const decreaseQty = (id: number) => {
+  setProducts(
+    products.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            quantity:
+              item.quantity > 1
+                ? item.quantity - 1
+                : 1,
+          }
+        : item
+    )
+  );
+};
+
+const deleteProduct = (id: number) => {
+  setProducts(
+    products.filter((item) => item.id !== id)
+  );
+};
+
+const deleteSelected = () => {
+  setProducts(
+    products.filter((item) => !item.selected)
+  );
+};
+  const total = products.reduce(
+  (sum, item) =>
+    item.selected
+      ? sum + item.price * item.quantity
+      : sum,
+  0
+);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
@@ -64,31 +149,45 @@ export default function CartPage() {
 
               <label className="flex items-center gap-4 text-[14px] font-medium text-[#1d1d1f]">
 
-  <div
-    className="
-      w-[28px]
-      h-[28px]
-      border
-      border-[#c9d1dc]
-      bg-white
-      flex
-      items-center
-      justify-center
-      rounded-sm
-    "
-  >
-    <span className="text-[#4d84c4] text-[16px] font-bold">
-      ✓
-    </span>
-  </div>
-
+<button
+  onClick={toggleSelectAll}
+  className="
+    w-[28px]
+    h-[28px]
+    border
+    border-[#c9d1dc]
+    bg-white
+    flex
+    items-center
+    justify-center
+    rounded-sm
+  "
+>
+  {allSelected && (
+    <Check
+      size={18}
+      className="text-[#0071e3]"
+    />
+  )}
+</button>
   Chọn tất cả ({products.length})
 
 </label>
 
-              <button className="text-[13px] text-[#6e6e73] hover:text-red-500">
-                🗑 Xóa đã chọn
-              </button>
+              <button
+  onClick={deleteSelected}
+  className="
+    flex
+    items-center
+    gap-2
+    text-[13px]
+    text-[#6e6e73]
+    hover:text-red-500
+  "
+>
+  <Trash2 size={16} />
+  Xóa đã chọn
+</button>
 
             </div>
 
@@ -111,26 +210,27 @@ export default function CartPage() {
     "
   >
     {/* Checkbox */}
-    <div className="w-[50px] flex justify-center shrink-0">
-      <div
-        className="
-          w-6
-          h-6
-          border-2
-          border-[#cfd5dd]
-          rounded-sm
-          flex
-          items-center
-          justify-center
-          bg-white
-          text-[#0068c9]
-          text-[14px]
-          font-bold
-        "
-      >
-        ✓
-      </div>
-    </div>
+   <button
+  onClick={() => toggleProduct(item.id)}
+  className="
+    w-6
+    h-6
+    border-2
+    border-[#cfd5dd]
+    rounded-sm
+    flex
+    items-center
+    justify-center
+    bg-white
+  "
+>
+  {item.selected && (
+    <Check
+      size={16}
+      className="text-[#0071e3]"
+    />
+  )}
+</button>
 
     {/* Image */}
     <div className="w-[120px] shrink-0">
@@ -164,13 +264,23 @@ export default function CartPage() {
           bg-[#f2f3f7]
         "
       >
-        <button className="w-8 text-[#555]">-</button>
+        <button
+  onClick={() => decreaseQty(item.id)}
+  className="w-8 text-[#555]"
+>
+  -
+</button>
 
         <div className="flex-1 text-center text-[15px] font-medium">
-          1
-        </div>
+  {item.quantity}
+</div>
 
-        <button className="w-8 text-[#555]">+</button>
+        <button
+  onClick={() => increaseQty(item.id)}
+  className="w-8 text-[#555]"
+>
+  +
+</button>
       </div>
     </div>
 
@@ -184,9 +294,17 @@ export default function CartPage() {
         {item.oldPrice.toLocaleString("vi-VN")}đ
       </div>
 
-      <button className="mt-8 text-[#ef4444] text-[18px]">
-        🗑
-      </button>
+      <button
+  onClick={() => deleteProduct(item.id)}
+  className="
+    mt-8
+    text-red-500
+    hover:text-red-700
+    transition
+  "
+>
+  <Trash2 size={20} />
+</button>
     </div>
   </div>
 ))}
