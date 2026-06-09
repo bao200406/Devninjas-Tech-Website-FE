@@ -27,7 +27,7 @@ export default function CheckoutPage() {
       </div>
 
       {/* Content */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_350px]">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
         {/* LEFT */}
         <div className="space-y-6">
           {/* Receiver Info */}
@@ -265,7 +265,8 @@ export default function CheckoutPage() {
         </div>
 
         {/* RIGHT */}
-        <div className="h-fit rounded-xl">
+        <div className="self-start rounded-2xl bg-[#FFFFFF] p-2 lg:p-6">
+          
           <h2 className="mb-5 text-lg font-semibold text-gray-800">
             Tóm tắt đơn hàng
           </h2>
