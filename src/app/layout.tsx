@@ -4,7 +4,7 @@ import "./globals.css";
 // Import các component bạn vừa tạo
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
+import LayoutContent from "@/components/layoutlogin/LayoutContent";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -31,9 +31,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Header />
-        {children}
-        <Footer />
+        <LayoutContent>{children}</LayoutContent>
       </body>
     </html>
   );

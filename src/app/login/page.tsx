@@ -118,18 +118,12 @@ export default function LoginPage() {
         </div>
 
         {/* Social Login */}
-        <div className="grid grid-cols-2 gap-4">
-          <button className="border rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-gray-50">
+        <div className="flex justify-center">
+          <button className="w-full border border-gray-300 rounded-xl py-4 flex items-center justify-center gap-3 hover:bg-gray-50 transition">
             <FcGoogle size={22} />
-            Google
-          </button>
-
-          <button className="border rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-gray-50">
-            <FaFacebookF
-              size={18}
-              className="text-blue-600"
-            />
-            Facebook
+            <span className="font-medium text-gray-700">
+              Google
+            </span>
           </button>
         </div>
 
