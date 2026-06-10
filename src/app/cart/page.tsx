@@ -151,17 +151,7 @@ const deleteSelected = () => {
 
 <button
   onClick={toggleSelectAll}
-  className="
-    w-[28px]
-    h-[28px]
-    border
-    border-[#c9d1dc]
-    bg-white
-    flex
-    items-center
-    justify-center
-    rounded-sm
-  "
+  className="w-[28px] h-[28px] border border-[#c9d1dc] bg-white flex items-center justify-center rounded-sm"
 >
   {allSelected && (
     <Check
