@@ -149,87 +149,52 @@ const deleteSelected = () => {
 
               <label className="flex items-center gap-4 text-[14px] font-medium text-[#1d1d1f]">
 
-<button
-  onClick={toggleSelectAll}
-  className="w-[28px] h-[28px] border border-[#c9d1dc] bg-white flex items-center justify-center rounded-sm"
->
-  {allSelected && (
-    <Check
-      size={18}
-      className="text-[#0071e3]"
-    />
-  )}
-</button>
-  Chọn tất cả ({products.length})
+                <button
+                  onClick={toggleSelectAll}
+                  className="w-[28px] h-[28px] border border-[#c9d1dc] bg-white flex items-center justify-center rounded-sm"
+                >
+                  {allSelected && (
+                    <Check
+                      size={18}
+                      className="text-[#0071e3]"
+                    />
+                  )}
+                </button>
+                  Chọn tất cả ({products.length})
 
-</label>
+              </label>
 
               <button
-  onClick={deleteSelected}
-  className="
-    flex
-    items-center
-    gap-2
-    text-[13px]
-    text-[#6e6e73]
-    hover:text-red-500
-  "
->
-  <Trash2 size={16} />
-  Xóa đã chọn
-</button>
+                onClick={deleteSelected}
+                className="flex items-center gap-2 text-[13px] text-[#6e6e73] hover:text-red-500">
+                <Trash2 size={16} />
+                  Xóa đã chọn
+              </button>
 
             </div>
 
             <div className="space-y-5 mt-5">
 
-{products.map((item) => (
-  <div
-    key={item.id}
-    className="
-      bg-white
-      border
-      border-[#ececec]
-      rounded-[10px]
-      px-8
-      py-6
-      flex
-      items-center
-      gap-6
-      w-full
-    "
-  >
-    {/* Checkbox */}
-   <button
-  onClick={() => toggleProduct(item.id)}
-  className="
-    w-6
-    h-6
-    border-2
-    border-[#cfd5dd]
-    rounded-sm
-    flex
-    items-center
-    justify-center
-    bg-white
-  "
->
-  {item.selected && (
-    <Check
-      size={16}
-      className="text-[#0071e3]"
-    />
-  )}
-</button>
+            {products.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white border border-[#ececec] rounded-[10px] px-8 py-6 flex items-center gap-6w-full">
+            {/* Checkbox */}
+              <button
+                onClick={() => toggleProduct(item.id)}
+                className=" w-6 h-6 border-2 border-[#cfd5dd] rounded-sm flex items-center justify-center bg-white">
+                {item.selected && (
+                  <Check
+                    size={16}
+                    className="text-[#0071e3]"
+                  />
+            )}
+                  </button>
 
     {/* Image */}
     <div className="w-[120px] shrink-0">
-      <Image
-        src={item.image}
-        alt={item.name}
-        width={102}
-        height={102}
-        className="w-[102px] h-[102px] object-cover rounded-sm"
+      <Image src={item.image} alt={item.name} width={102} height={102}
+       className="w-[102px] h-[102px] object-cover rounded-sm"
       />
     </div>
 
@@ -243,61 +208,43 @@ const deleteSelected = () => {
         Màu sắc / RAM: {item.variant}
       </p>
 
-      <div
-        className="
-          mt-5
-          flex
-          items-center
-          w-[88px]
-          h-[34px]
-          rounded
-          bg-[#f2f3f7]
-        "
-      >
+      <div className=" mt-5 flex items-center w-[88px] h-[34px] rounded bg-[#f2f3f7]">
         <button
-  onClick={() => decreaseQty(item.id)}
-  className="w-8 text-[#555]"
->
-  -
-</button>
+          onClick={() => decreaseQty(item.id)}
+          className="w-8 text-[#555]">
+           -
+        </button>
 
         <div className="flex-1 text-center text-[15px] font-medium">
-  {item.quantity}
-</div>
+          {item.quantity}
+        </div>
 
         <button
-  onClick={() => increaseQty(item.id)}
-  className="w-8 text-[#555]"
->
-  +
-</button>
+          onClick={() => increaseQty(item.id)}
+          className="w-8 text-[#555]">
+          +
+        </button>
       </div>
     </div>
 
-    {/* Price */}
-    <div className="w-[180px] shrink-0 text-right">
-      <div className="text-[22px] font-bold text-[#005fa9]">
-        {item.price.toLocaleString("vi-VN")}đ
-      </div>
+          {/* Price */}
+          <div className="w-[180px] shrink-0 text-right">
+            <div className="text-[22px] font-bold text-[#005fa9]">
+              {item.price.toLocaleString("vi-VN")}đ
+            </div>
 
-      <div className="mt-1 text-[14px] text-[#9c9c9c] line-through">
-        {item.oldPrice.toLocaleString("vi-VN")}đ
-      </div>
+            <div className="mt-1 text-[14px] text-[#9c9c9c] line-through">
+              {item.oldPrice.toLocaleString("vi-VN")}đ
+            </div>
 
-      <button
-  onClick={() => deleteProduct(item.id)}
-  className="
-    mt-8
-    text-red-500
-    hover:text-red-700
-    transition
-  "
->
-  <Trash2 size={20} />
-</button>
-    </div>
-  </div>
-))}
+              <button
+                onClick={() => deleteProduct(item.id)}
+                className=" mt-8 text-red-500 hover:text-red-700 transition">
+                <Trash2 size={20} />
+              </button>
+              </div>
+              </div>
+        ))}
 
             </div>
 
@@ -345,37 +292,11 @@ const deleteSelected = () => {
               </div>
 
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Nhập mã ưu đãi..."
-                  className="
-                    flex-1
-                    h-[58px]
-                    px-5
-                    rounded-md
-                    bg-[#f2f3f7]
-                    text-[15px]
-                    text-[#8d93a1]
-                    outline-none
-                    border border-transparent
-                    focus:border-[#405b83]
-                  "
-                />
+                <input type="text" placeholder="Nhập mã ưu đãi..."
+                  className="flex-1 h-[58px] px-5 rounded-md bg-[#f2f3f7] text-[15px] text-[#8d93a1] outline-none border border-transparent focus:border-[#405b83]"/>
 
                 <button
-                  className="
-                    w-[95px]
-                    h-[58px]
-                    rounded-md
-                    bg-[#4a6184]
-                    text-white
-                    text-[18px]
-                    font-bold
-                    leading-5
-                    hover:bg-[#3f5576]
-                    transition
-                  "
-                >
+                  className="w-[95px] h-[58px] rounded-md bg-[#4a6184] text-white text-[18px] font-bold leading-5 hover:bg-[#3f5576] transition">
                   Áp dụng
                 </button>
               </div>
@@ -406,80 +327,22 @@ const deleteSelected = () => {
               </div>
 
               <button
-                className="
-                  mt-8
-                  w-full
-                  h-[64px]
-                  rounded-[10px]
-                  bg-[#0068b3]
-                  text-white
-                  text-[18px]
-                  font-semibold
-                  shadow-md
-                  transition
-                  hover:bg-[#00599a]
-                "
-              >
+                className="mt-8 w-full h-[64px] rounded-[10px] bg-[#0068b3] text-white text-[18px] font-semibold shadow-md transition hover:bg-[#00599a]">
                 Tiến hành thanh toán →
               </button>
 
-              <button
-                className="
-                  mt-4
-                  w-full
-                  h-[64px]
-                  rounded-[10px]
-                  border-2
-                  border-[#d8dde6]
-                  bg-white
-                  text-[18px]
-                  font-semibold
-                  text-[#222]
-                  transition
-                  hover:bg-[#f8f8f8]
-                "
-              >
+              <button className="mt-4 w-full h-[64px] rounded-[10px] border-2 border-[#d8dde6] bg-white text-[18px] font-semibold text-[#222] transition hover:bg-[#f8f8f8]">
                 Tiếp tục mua sắm
               </button>
-              <div
-  className="
-mt-5
-flex
-items-center
-gap-4
-bg-[#faf4ef]
-px-4
-py-4
-rounded
-"
->
+              <div className="mt-5 flex items-center gap-4 bg-[#faf4ef] px-4 py-4 rounded">
   {/* Icon */}
 
-  <div
-    className="
-      w-8
-      h-8
-      rounded-full
-      bg-[#f2ae73]
-      flex
-      items-center
-      justify-center
-      flex-shrink-0
-    "
-  >
+  <div className="w-8 h-8 rounded-full bg-[#f2ae73] flex items-center justify-center flex-shrink-0">
     <span className="text-white text-[20px] font-bold leading-none">
       i
     </span>
   </div>
- <p
-  className="
-    flex-1
-    text-[15px]
-    leading-7
-    text-[#7c4d18]
-    font-medium
-  "
->
+ <p className="flex-1 text-[15px] leading-7 text-[#7c4d18] font-medium">
   Đơn hàng của bạn đủ điều kiện nhận{" "}
   <span className="font-bold">
     Gói Bảo Hành Rơi Vỡ 12 tháng
