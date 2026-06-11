@@ -1,4 +1,19 @@
 @import "tailwindcss";
+
 @theme {
+  /* Font chữ */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Định nghĩa màu sắc dùng chung */
+  --color-app-bg: #F8F9FF;
+  --color-brand-blue: #1e3a8a; /* Màu xanh đậm của bạn (blue-900) */
+  
+  /* Nếu bạn muốn thêm các khoảng cách hoặc kích thước tùy chỉnh, hãy để ở đây */
+}
+
+/* Áp dụng màu nền mặc định cho trang web */
+@layer base {
+  body {
+    @apply bg-app-bg;
+  }
 }

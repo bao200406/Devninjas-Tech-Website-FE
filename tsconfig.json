@@ -30,7 +30,8 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts",
-    "src/app/checkout/page.jsx"
+    "src/app/checkout/page.jsx",
+    "src/app/login/page.jsx"
   ],
   "exclude": ["node_modules"]
 }

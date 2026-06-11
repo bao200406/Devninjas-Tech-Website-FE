@@ -1,5 +1,4 @@
-import Header from "@/components/Header"; // Đừng quên import Header
-import Footer from "@/components/Footer";
+
 import HeroSection from "@/components/home/HeroSection";
 import CategoryBar from "@/components/home/CategoryBar";
 import FlashSaleSection from "@/components/home/FlashSaleSection";
@@ -37,7 +36,7 @@ const bestSellerData = [
 ];
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-app-bg min-h-screen">
       
       <main className="flex flex-col gap-12 py-8">
         {/* Banner chính */}
