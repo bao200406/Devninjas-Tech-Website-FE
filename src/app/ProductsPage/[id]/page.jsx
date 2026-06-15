@@ -1,12 +1,47 @@
 "use client";
-
+import { useState, useEffect, use } from "react";
+import { getVariantsByProduct } from "../../../services/productVariantService";
+// Import service lấy thông tin sản phẩm chính (bạn cần viết thêm hàm này)
+import { getProductById } from "../../../services/productService";
 import Breadcrumb from "@/components/ProductDetail/Breadcrumb";
 import ProductGallery from "@/components/ProductDetail/ProductGallery";
 import ProductInfo from "@/components/ProductDetail/ProductInfo";
 import ProductTabs from "@/components/ProductDetail/ProductTabs";
 import RelatedProducts from "@/components/ProductDetail/RelatedProducts";
 
-export default function ProductDetailPage() {
+export default function ProductDetailPage({ params }) {
+
+  // 2. Unwrap params bằng hàm use()
+  const resolvedParams = use(params);
+  const { id } = resolvedParams;
+  const [product, setProduct] = useState(null);
+  const [variants, setVariants] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+ useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Gọi API
+        const productRes = await getProductById(id); // Gọi trực tiếp, vì hàm của bạn đã return result.data rồi
+        const variantsRes = await getVariantsByProduct(id);
+
+        console.log("Dữ liệu sản phẩm sau khi fetch:", productRes); // Kiểm tra log này
+        
+        setProduct(productRes); // Gán trực tiếp vì hàm service đã return result.data
+        setVariants(variantsRes);
+      } catch (error) {
+        console.error("Lỗi tải dữ liệu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) return <div>Đang tải...</div>;
+  if (!product) return <div>Không tìm thấy sản phẩm!</div>;
+
   return (
     <div className="bg-app-bg min-h-screen w-full font-sans antialiased">
       {/* ĐỒNG BỘ TUYỆT ĐỐI VỚI HEADER VÀ FOOTER:
@@ -27,7 +62,7 @@ export default function ProductDetailPage() {
          */}
         <section className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-start">
           <div className="lg:col-span-7 w-full flex justify-start">
-            <ProductGallery />
+            <ProductGallery variants={variants} />
           </div>
           
           {/* BỔ SUNG CHIẾN LƯỢC STICKY TẠI ĐÂY:
@@ -36,7 +71,9 @@ export default function ProductDetailPage() {
                 giúp khối thông tin không bị che mất hoặc dính chặt vào Header trắng của bạn.
           */}
           <div className="lg:col-span-5 w-full flex justify-end lg:sticky lg:top-24">
-            <ProductInfo />
+            {/* Thông tin sản phẩm */}
+            <ProductInfo product={product} variants={variants} 
+            />
           </div>
         </section>
 

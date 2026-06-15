@@ -8,10 +8,39 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import { useRouter } from "next/navigation"; // Hook điều hướng
+import { loginUser } from "../../services/authService";
 import { FaFacebookF } from "react-icons/fa";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  // Hàm cập nhật state khi người dùng nhập liệu
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Hàm xử lý đăng nhập
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+     await loginUser(formData);
+      alert("Đăng nhập thành công!");
+      router.push("/"); // Chuyển hướng về trang chủ hoặc dashboard
+    } catch (err) {
+      setError(err.response?.data?.message || "Đăng nhập thất bại, kiểm tra lại thông tin!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f3f5fb] flex items-center justify-center px-4">
@@ -36,7 +65,10 @@ export default function LoginPage() {
           Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng.
         </p>
 
-        <form className="space-y-5">
+        <form 
+          onSubmit={handleSubmit} // Thêm sự kiện gửi form
+          className="space-y-5"
+        >
           {/* Email */}
           <div>
             <label className="block text-sm font-semibold mb-2">
@@ -47,9 +79,13 @@ export default function LoginPage() {
               <FaEnvelope className="text-gray-400" />
 
               <input
+                name="email" // Bắt buộc phải có để lấy dữ liệu
                 type="text"
+                value={formData.email} // Gắn giá trị từ state
+                onChange={handleChange} // Xử lý thay đổi
                 placeholder="your@email.com"
                 className="w-full bg-transparent px-3 py-4 outline-none"
+                required
               />
             </div>
           </div>
@@ -64,9 +100,13 @@ export default function LoginPage() {
               <FaLock className="text-gray-400" />
 
               <input
+                name="password" // Bắt buộc phải có
                 type={showPassword ? "text" : "password"}
+                value={formData.password} // Gắn giá trị từ state
+                onChange={handleChange} // Xử lý thay đổi
                 placeholder="••••••••"
                 className="w-full bg-transparent px-3 py-4 outline-none"
+                required
               />
 
               <button
@@ -89,20 +129,21 @@ export default function LoginPage() {
               Ghi nhớ đăng nhập
             </label>
 
-            <a
-              href="#"
-              className="text-blue-700 font-medium"
-            >
+            <a href="#" className="text-blue-700 font-medium">
               Quên mật khẩu?
             </a>
           </div>
 
+          {/* Hiển thị lỗi */}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl font-semibold transition"
+            disabled={loading} // Vô hiệu hóa nút khi đang gửi request
+            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl font-semibold transition disabled:opacity-70"
           >
-            Đăng nhập
+            {loading ? "Đang xử lý..." : "Đăng nhập"}
           </button>
         </form>
 

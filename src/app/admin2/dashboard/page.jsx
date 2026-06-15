@@ -25,6 +25,7 @@ import {
   Cell,
   PieChart,
   Pie,
+  BarChart, Bar
 } from "recharts";
 
 // Data mẫu cho Chart
@@ -214,55 +215,48 @@ export default function Dashboard() {
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Main Revenue Chart */}
-        <div className="xl:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="font-bold text-slate-900">Overview</h3>
-              <p className="text-xs text-slate-400">
-                Monthly performance for the current year
-              </p>
+       <div className="xl:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="font-bold text-slate-900">Overview</h3>
+                <p className="text-xs text-slate-400">
+                  Monthly performance for the current year
+                </p>
+              </div>
+              <div className="flex bg-slate-50 p-1 rounded-lg gap-1">
+                {["Revenue", "Orders", "Profit"].map((tab) => (
+                  <button
+                    key={tab}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                      tab === "Revenue" ? "bg-white shadow-sm text-slate-900" : "text-slate-400"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex bg-slate-50 p-1 rounded-lg gap-1">
-              {["Revenue", "Orders", "Profit"].map((tab) => (
-                <button
-                  key={tab}
-                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${tab === "Revenue" ? "bg-white shadow-sm text-slate-900" : "text-slate-400"}`}
-                >
-                  {tab}
-                </button>
-              ))}
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={revenueData}>
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                    dy={10}
+                  />
+                  <YAxis hide />
+                  <Tooltip />
+                  <Bar
+                    dataKey="revenue"
+                    fill="#F97316"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData}>
-                <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F97316" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "#94a3b8" }}
-                  dy={10}
-                />
-                <YAxis hide />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#F97316"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorRev)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
 
         {/* Traffic Sources */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
