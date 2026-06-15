@@ -29,13 +29,13 @@ export default function HeroSection() {
 
           {/* Cột phải: Hình ảnh */}
           <div className="relative">
-            <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl">
-              <img 
-                src="/hero-image.jpg" // Hãy thay bằng đường dẫn ảnh của bạn
-                alt="Laptop và Smartphone cao cấp" 
-                className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity duration-500"
-              />
-            </div>
+           <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+            <img 
+              src="http://googleusercontent.com/image_collection/image_retrieval/10756008250706254275" 
+              alt="Laptop và Smartphone cao cấp" 
+              className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity duration-500"
+            />
+          </div>
             {/* Hiệu ứng trang trí nhẹ nếu muốn giống bản thiết kế chuyên nghiệp */}
             <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-blue-200 rounded-full blur-3xl opacity-50 -z-10"></div>
           </div>

@@ -1,4 +1,6 @@
-
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import { getHomePageData } from "../services/productService";
 import HeroSection from "@/components/home/HeroSection";
 import CategoryBar from "@/components/home/CategoryBar";
 import FlashSaleSection from "@/components/home/FlashSaleSection";
@@ -7,33 +9,19 @@ import BlogSection from "@/components/home/BlogSection";
 import FeedbackSection from "@/components/home/FeedbackSection";
 
 export default function Home() {
-const bestSellerData = [
-  { 
-    name: "Sony XM5 Noise Cancelling", 
-    price: "8.490.000đ", 
-    rating: 5.0, 
-    soldCount: "1.2k+", 
-    tag: "BÁN CHẠY" 
-  },
-  { 
-    name: "iPhone 15 Pro Max", 
-    price: "27.490.000đ", 
-    rating: 4.9, 
-    soldCount: "2.5k+" 
-  },
-  { 
-    name: "Samsung Galaxy Watch", 
-    price: "6.990.000đ", 
-    rating: 4.8, 
-    soldCount: "800+" 
-  },
-  { 
-    name: "MacBook Air M2 13\"", 
-    price: "18.990.000đ", 
-    rating: 5.0, 
-    soldCount: "1.1k+" 
-  },
-];
+
+// 1. Sử dụng useQuery để fetch dữ liệu từ API
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["homeData"],
+    queryFn: getHomePageData,
+  });
+
+  // 2. Xử lý trạng thái Loading và Error
+  if (isLoading) return <div className="text-center py-20">Đang tải dữ liệu...</div>;
+  if (error) return <div className="text-center py-20 text-red-500">Lỗi khi tải trang!</div>;
+
+  // data lúc này sẽ có cấu trúc: { newProducts: [], featuredProducts: [], bestSellers: [] }
+  const { newProducts, featuredProducts, bestSellers } = data;
 
   return (
     <div className="bg-app-bg min-h-screen">
@@ -48,10 +36,11 @@ const bestSellerData = [
         {/* Flash Sale - Nổi bật */}
         <FlashSaleSection />
         
-        {/* Danh sách sản phẩm */}
-        <ProductSection title="SẢN PHẨM MỚI" showCart={false} />
-        <ProductSection title="SẢN PHẨM NỔI BẬT" showCart={false} />
-        <ProductSection title="SẢN PHẨM BÁN CHẠY" showCart={true} products={bestSellerData} />
+
+        {/* 3. Truyền dữ liệu thật vào các Section */}
+        <ProductSection title="SẢN PHẨM MỚI" products={newProducts} showCart={false}  tag="MỚI"/>
+        <ProductSection title="SẢN PHẨM NỔI BẬT" products={featuredProducts} showCart={false} tag="NỔI BẬT"/>
+        <ProductSection title="SẢN PHẨM BÁN CHẠY" products={bestSellers} showCart={true} tag="BÁN CHẠY"/>
         
         <BlogSection />
         <FeedbackSection />

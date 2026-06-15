@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LayoutManager from "@/components/layout/LayoutManager";
+import Providers from "./Providers/providers"
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -31,7 +32,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <LayoutManager>{children}</LayoutManager>
+        <Providers>
+          <LayoutManager>{children}</LayoutManager>
+        </Providers>
       </body>
     </html>
   );

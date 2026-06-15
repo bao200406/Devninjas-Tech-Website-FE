@@ -55,6 +55,9 @@ export default function RegisterPage() {
       alert("Đăng ký tài khoản thành công!");
       // Có thể chuyển hướng: window.location.href = "/login";
     } catch (error) {
+      // Thay vì chỉ alert, hãy log chi tiết ra console
+      console.log("Chi tiết lỗi:", error); 
+      console.log("Response từ server:", error.response);
       alert(error.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại!");
     } finally {
       setIsLoading(false);
