@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo  } from "react";
 import { Star, Heart, ArrowLeftRight, Truck, ShieldCheck, RefreshCw } from "lucide-react";
+import * as cartService from "../../services/cartService"; // Đường dẫn đến file service của bạn
 
 export default function ProductInfo({ product, variants }) {
   const variantList = variants?.data || [];
@@ -65,6 +66,20 @@ export default function ProductInfo({ product, variants }) {
   }, [selectedColor, selectedStorage, variantList]);
 
   if (!product || !selectedVariant) return null;
+
+    const handleAddToCart = async () => {
+    try {
+      // selectedVariant.variantId chính là ID của biến thể đang được chọn
+      // quantity là state số lượng người dùng đã chọn
+      await cartService.addToCart(selectedVariant._id, quantity);
+      
+      alert("Thêm vào giỏ hàng thành công!"); 
+      // Gợi ý: Dùng toast (như react-hot-toast) thay cho alert sẽ chuyên nghiệp hơn
+    } catch (error) {
+      console.error("Lỗi thêm vào giỏ:", error);
+      alert(error.response?.data?.message || "Có lỗi xảy ra khi thêm vào giỏ hàng");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-5.5 w-full">
@@ -152,7 +167,10 @@ export default function ProductInfo({ product, variants }) {
       </div>
 
       <div className="flex gap-3.5 mt-1 w-full">
-        <button className="flex-1 py-3 border border-[#005ba4] text-[#005ba4] text-xs font-bold rounded-md hover:bg-blue-50/40 transition-colors">
+        <button 
+          onClick={handleAddToCart}
+          className="flex-1 py-3 border border-[#005ba4] text-[#005ba4] text-xs font-bold rounded-md hover:bg-blue-50/40 transition-colors"
+        >
           THÊM VÀO GIỎ HÀNG
         </button>
         <button className="flex-1 py-3 bg-[#005ba4] text-white text-xs font-bold rounded-md hover:bg-[#004b88] transition-colors shadow-sm">

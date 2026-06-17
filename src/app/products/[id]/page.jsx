@@ -14,6 +14,7 @@ export default function ProductDetailPage({ params }) {
   // 2. Unwrap params bằng hàm use()
   const resolvedParams = use(params);
   const { id } = resolvedParams;
+  console.log("ID sản phẩm từ params:", id); // Kiểm tra log này để đảm bảo bạn nhận được ID đúng
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
