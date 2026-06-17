@@ -15,7 +15,7 @@ export default function ProductCard({
 
   return (
     // 3. Bọc toàn bộ card bằng thẻ Link. Sử dụng block để Link bao phủ toàn bộ diện tích
-    <Link href={`/ProductsPage/${id}`} className="block h-full">
+    <Link href={`/products/${id}`} className="block h-full">
       <div className="bg-white p-4 rounded-xl border border-gray-100 hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
         
         {/* Hình ảnh - Thêm hiệu ứng hover zoom nhẹ */}
