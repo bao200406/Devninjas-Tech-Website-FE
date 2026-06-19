@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 // Import các component bạn vừa tạo
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { AuthProvider } from "@/context/AuthContext";
 import LayoutManager from "@/components/layout/LayoutManager";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // BẮT BUỘC ĐỂ CÓ CSS PROGRESS BAR
 import Providers from "./Providers/providers"
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,9 +33,25 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>
-          <LayoutManager>{children}</LayoutManager>
-        </Providers>
+        {/* AuthProvider được bọc ở mức cao nhất để mọi component bên trong đều dùng được */}
+        <AuthProvider>
+          <Providers>
+            <LayoutManager>{children}</LayoutManager>
+            
+            <ToastContainer 
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={true}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+          </Providers>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -6,179 +6,121 @@ import {
   FaLock,
   FaEye,
   FaEyeSlash,
+  FaSpinner, // Thêm icon spinner
 } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { useRouter } from "next/navigation"; // Hook điều hướng
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion"; // Thêm animation
+import { toast } from "react-toastify"; // Dùng toast thay alert
 import { loginUser } from "../../services/authService";
-import { FaFacebookF } from "react-icons/fa";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
 
-  // Hàm cập nhật state khi người dùng nhập liệu
+  // Cấu hình Animation
+  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value.trim() }));
   };
 
-  // Hàm xử lý đăng nhập
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    
+    const loadingId = toast.loading("Đang xác thực...");
 
     try {
-     await loginUser(formData);
-      alert("Đăng nhập thành công!");
-      router.push("/"); // Chuyển hướng về trang chủ hoặc dashboard
+      await loginUser(formData);
+      toast.update(loadingId, {
+        render: "Đăng nhập thành công!",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+      });
+      setTimeout(() => router.push("/"), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || "Đăng nhập thất bại, kiểm tra lại thông tin!");
-    } finally {
+      toast.dismiss(loadingId);
+      toast.error(err.response?.data?.message || "Đăng nhập thất bại, kiểm tra lại thông tin!");
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f5fb] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-blue-700 rounded-md flex items-center justify-center text-white font-bold">
-            A
-          </div>
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="min-h-screen bg-[#f3f5fb] flex items-center justify-center px-4"
+    >
+      <motion.div 
+        variants={containerVariants} initial="hidden" animate="visible"
+        className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8"
+      >
+        <motion.div variants={itemVariants} className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-blue-700 rounded-md flex items-center justify-center text-white font-bold">A</div>
+          <h2 className="text-2xl font-bold text-blue-700">Azure Logic</h2>
+        </motion.div>
 
-          <h2 className="text-2xl font-bold text-blue-700">
-            Azure Logic
-          </h2>
-        </div>
+        <motion.h1 variants={itemVariants} className="text-4xl font-bold text-gray-900 mb-2">Đăng nhập</motion.h1>
+        <motion.p variants={itemVariants} className="text-gray-500 mb-8">Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng.</motion.p>
 
-        {/* Title */}
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Đăng nhập
-        </h1>
-
-        <p className="text-gray-500 mb-8">
-          Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng.
-        </p>
-
-        <form 
-          onSubmit={handleSubmit} // Thêm sự kiện gửi form
-          className="space-y-5"
-        >
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              EMAIL / SỐ ĐIỆN THOẠI
-            </label>
-
-            <div className="flex items-center bg-gray-100 rounded-xl px-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-semibold mb-2">EMAIL / SỐ ĐIỆN THOẠI</label>
+            <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaEnvelope className="text-gray-400" />
-
-              <input
-                name="email" // Bắt buộc phải có để lấy dữ liệu
-                type="text"
-                value={formData.email} // Gắn giá trị từ state
-                onChange={handleChange} // Xử lý thay đổi
-                placeholder="your@email.com"
-                className="w-full bg-transparent px-3 py-4 outline-none"
-                required
-              />
+              <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="your@email.com" className="w-full bg-transparent px-3 py-4 outline-none" required />
             </div>
-          </div>
+          </motion.div>
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              MẬT KHẨU
-            </label>
-
-            <div className="flex items-center bg-gray-100 rounded-xl px-4">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-semibold mb-2">MẬT KHẨU</label>
+            <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaLock className="text-gray-400" />
-
-              <input
-                name="password" // Bắt buộc phải có
-                type={showPassword ? "text" : "password"}
-                value={formData.password} // Gắn giá trị từ state
-                onChange={handleChange} // Xử lý thay đổi
-                placeholder="••••••••"
-                className="w-full bg-transparent px-3 py-4 outline-none"
-                required
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <FaEyeSlash className="text-gray-500" />
-                ) : (
-                  <FaEye className="text-gray-500" />
-                )}
+              <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <FaEyeSlash className="text-gray-500" /> : <FaEye className="text-gray-500" />}
               </button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Remember */}
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" />
-              Ghi nhớ đăng nhập
-            </label>
+          <motion.div variants={itemVariants} className="flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2"><input type="checkbox" /> Ghi nhớ đăng nhập</label>
+            <a href="#" className="text-blue-700 font-medium">Quên mật khẩu?</a>
+          </motion.div>
 
-            <a href="#" className="text-blue-700 font-medium">
-              Quên mật khẩu?
-            </a>
-          </div>
-
-          {/* Hiển thị lỗi */}
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          {/* Login Button */}
-          <button
+          <motion.button
+            variants={itemVariants}
             type="submit"
-            disabled={loading} // Vô hiệu hóa nút khi đang gửi request
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl font-semibold transition disabled:opacity-70"
+            disabled={loading}
+            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl font-semibold transition disabled:opacity-70 flex items-center justify-center gap-2"
           >
-            {loading ? "Đang xử lý..." : "Đăng nhập"}
-          </button>
+            {loading ? <><FaSpinner className="animate-spin" /> Đang xử lý...</> : "Đăng nhập"}
+          </motion.button>
         </form>
 
-        {/* Divider */}
-        <div className="flex items-center my-6">
+        <motion.div variants={itemVariants} className="flex items-center my-6">
           <div className="flex-1 border-t"></div>
-
-          <span className="px-4 text-gray-400 text-sm">
-            HOẶC TIẾP TỤC VỚI
-          </span>
-
+          <span className="px-4 text-gray-400 text-sm">HOẶC TIẾP TỤC VỚI</span>
           <div className="flex-1 border-t"></div>
-        </div>
+        </motion.div>
 
-        {/* Social Login */}
-        <div className="flex justify-center">
+        <motion.div variants={itemVariants} className="flex justify-center">
           <button className="w-full border border-gray-300 rounded-xl py-4 flex items-center justify-center gap-3 hover:bg-gray-50 transition">
             <FcGoogle size={22} />
-            <span className="font-medium text-gray-700">
-              Google
-            </span>
+            <span className="font-medium text-gray-700">Google</span>
           </button>
-        </div>
+        </motion.div>
 
-        {/* Register */}
-        <p className="text-center mt-8 text-gray-600">
+        <motion.p variants={itemVariants} className="text-center mt-8 text-gray-600">
           Chưa có tài khoản?{" "}
-          <a
-            href="/register"
-            className="text-blue-700 font-semibold"
-          >
-            Đăng ký ngay
-          </a>
-        </p>
-      </div>
-    </div>
+          <a href="/register" className="text-blue-700 font-semibold">Đăng ký ngay</a>
+        </motion.p>
+      </motion.div>
+    </motion.div>
   );
 }

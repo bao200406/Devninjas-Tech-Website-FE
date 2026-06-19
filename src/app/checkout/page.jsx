@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import * as orderService from "../../services/orderService";
 import {getCart} from "../../services/cartService";
+import { createStripePayment, createCODOrder } from "../../services/paymentService";
 
 export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -53,17 +54,34 @@ export default function CheckoutPage() {
     }, []);
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const order = await orderService.createOrder({
+      e.preventDefault();
+
+      // 1. Chuẩn bị dữ liệu từ form và phương thức đã chọn
+      const orderData = {
         ...formData,
-      });
+        paymentMethod: paymentMethod, // 'cod' hoặc 'stripe'
+      };
 
-      console.log(order);
+      try {
+        // 2. Gửi yêu cầu đặt hàng tới backend
+        const response = await orderService.createOrder(orderData);
 
-    } catch (error) {
-      console.error(error);
-    }
+        // 3. Xử lý logic dựa trên phản hồi của backend
+        if (response.success) {
+          if (paymentMethod === "stripe" && response.url) {
+            // Nếu là Stripe và có URL, chuyển hướng người dùng sang trang thanh toán
+            window.location.href = response.url;
+          } else {
+            // Nếu là COD, hiển thị thông báo thành công
+            alert("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
+            // Chuyển hướng về trang lịch sử đơn hàng hoặc trang chủ
+            window.location.href = "/order-history"; 
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi đặt hàng:", error);
+        alert(error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.");
+      }
     };
 
 
@@ -244,84 +262,55 @@ export default function CheckoutPage() {
 
               {/* Payment */}
               <div className="rounded-xl">
-              <div className="mb-5 flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
-                  3
+                <div className="mb-5 flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
+                    3
+                  </div>
+                  <h2 className="text-[15px] font-semibold text-gray-800">
+                    Phương thức thanh toán
+                  </h2>
                 </div>
 
-                <h2 className="text-[15px] font-semibold text-gray-800">
-                  Phương thức thanh toán
-                </h2>
+                <div className="space-y-3">
+                  {/* COD */}
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
+                      paymentMethod === "cod"
+                        ? "border-[#005BAC] bg-[#f8fbff]"
+                        : "border-gray-300 bg-white"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="cod"
+                      checked={paymentMethod === "cod"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    />
+                    <CreditCard size={18} />
+                    <span className="font-medium">Thanh toán khi nhận hàng (COD)</span>
+                  </label>
+
+                  {/* Stripe */}
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
+                      paymentMethod === "stripe"
+                        ? "border-[#005BAC] bg-[#f8fbff]"
+                        : "border-gray-300 bg-white"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="stripe"
+                      checked={paymentMethod === "stripe"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    />
+                    <CreditCard size={18} />
+                    <span className="font-medium">Thanh toán Online (Stripe)</span>
+                  </label>
+                </div>
               </div>
-
-              <div className="space-y-3">
-
-                {/* COD */}
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                    paymentMethod === "cod"
-                      ? "border-[#005BAC] bg-[#f8fbff]"
-                      : "border-gray-300 bg-white"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="cod"
-                    checked={paymentMethod === "cod"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
-
-                  <CreditCard size={18} />
-
-                  <span className="font-medium">
-                    Thanh toán khi nhận hàng (COD)
-                  </span>
-                </label>
-
-                {/* Bank */}
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                    paymentMethod === "bank"
-                      ? "border-[#005BAC] bg-[#f8fbff]"
-                      : "border-gray-300 bg-white"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="bank"
-                    checked={paymentMethod === "bank"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
-
-                  <Landmark size={18} />
-
-                  <span>Chuyển khoản</span>
-                </label>
-
-                {/* Visa */}
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                    paymentMethod === "visa"
-                      ? "border-[#005BAC] bg-[#f8fbff]"
-                      : "border-gray-300 bg-white"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="visa"
-                    checked={paymentMethod === "visa"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
-
-                  <CreditCard size={18} />
-
-                  <span>Thẻ Visa / Mastercard</span>
-                </label>
-              </div>
-            </div>
 
               {/* Note */}
               <div className="rounded-xl">
