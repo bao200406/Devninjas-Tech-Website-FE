@@ -14,6 +14,7 @@ export default function LayoutContent({
   const hideLayout =
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/orderHistory" ||
     pathname.startsWith("/admin");
 
   if (hideLayout) {

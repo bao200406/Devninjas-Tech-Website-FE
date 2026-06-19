@@ -5,3 +5,9 @@ export const createOrder = async (data) => {
 
   return response.data;
 };
+
+export const getOrderByUser = async (params) => {
+  // params có thể là { status: 'ĐANG GIAO', page: 1, limit: 10 }
+  const res = await api.get('/orders/my-orders', { params });
+  return res.data;
+};
