@@ -7,6 +7,7 @@ import LayoutManager from "@/components/layout/LayoutManager";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // BẮT BUỘC ĐỂ CÓ CSS PROGRESS BAR
 import Providers from "./Providers/providers"
+import AOSProvider from "./Providers/AOSProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -36,8 +37,9 @@ export default function RootLayout({
         {/* AuthProvider được bọc ở mức cao nhất để mọi component bên trong đều dùng được */}
         <AuthProvider>
           <Providers>
-            <LayoutManager>{children}</LayoutManager>
-            
+            <AOSProvider>
+              <LayoutManager>{children}</LayoutManager>
+            </AOSProvider>
             <ToastContainer 
               position="top-right"
               autoClose={3000}

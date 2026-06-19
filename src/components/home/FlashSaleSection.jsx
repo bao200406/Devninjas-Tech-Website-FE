@@ -1,17 +1,25 @@
 import { Zap } from "lucide-react";
-
-const products = [
-  { name: "iPhone 15 Pro Max 256GB", price: "27.990.000đ", oldPrice: "34.990.000đ", rating: 4.9, discount: "-20%", img: "/phone.png" },
-  { name: "MacBook Air M2 13\"", price: "18.525.000đ", oldPrice: "28.500.000đ", rating: 4.8, discount: "-35%", img: "/laptop.png" },
-  { name: "Galaxy Watch 6", price: "6.366.500đ", oldPrice: "7.490.000đ", rating: 4.7, discount: "-15%", img: "/watch.png" },
-  { name: "Sony XM5 Headphones", price: "5.394.000đ", oldPrice: "8.990.000đ", rating: 5.0, discount: "-40%", img: "/headphone.png" },
-];
+import { useEffect, useState } from "react";
+import { getFlashSales } from "../../services/flashSaleService";
 
 export default function FlashSaleSection() {
+  const [flashSales, setFlashSales] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getFlashSales();
+        if (res && res.data) setFlashSales(res.data);
+      } catch (err) {
+        console.error("Lỗi khi tải Flash Sale:", err);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <section className="py-8">
       <div className="container mx-auto px-4">
-        {/* Container với Gradient Background */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 text-white">
           
           {/* Header */}
@@ -20,35 +28,66 @@ export default function FlashSaleSection() {
               <Zap className="fill-white" />
               <h2 className="text-xl font-bold tracking-wide">FLASH SALE</h2>
               <div className="flex gap-2 text-xs">
-                <span className="bg-black px-2 py-1 rounded">02</span>
-                <span className="bg-black px-2 py-1 rounded">45</span>
-                <span className="bg-black px-2 py-1 rounded">12</span>
+                <span className="bg-black px-2 py-1 rounded">00</span>
+                <span className="bg-black px-2 py-1 rounded">01</span>
+                <span className="bg-black px-2 py-1 rounded">26</span>
               </div>
             </div>
             <button className="text-sm font-medium hover:underline">XEM TẤT CẢ</button>
           </div>
 
           {/* Grid Sản phẩm */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {products.map((p, i) => (
-              <div key={i} className="bg-white rounded-xl p-3 text-gray-900 relative">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {flashSales.map((item) => {
+              const progress = (item.soldQuantity / item.flashSaleQuantity) * 100;
+              return (
+                <div key={item._id} className="bg-white rounded-xl p-3 text-gray-900 relative shadow-sm hover:shadow-lg transition-shadow flex flex-col gap-y-2">
+  
                 {/* Discount Badge */}
-                <span className="absolute top-2 right-2 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded">
-                  {p.discount}
+                <span className="absolute top-2 right-2 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold z-10">
+                  -{Math.round(((item.variantId.price - item.flashSalePrice) / item.variantId.price) * 100)}%
                 </span>
                 
-                {/* Product Image */}
-                <div className="h-32 flex items-center justify-center mb-2">
-                  <div className="w-24 h-24 bg-gray-100 rounded-lg" /> {/* Placeholder ảnh */}
+                {/* Image: Thêm h-32 và flex center để căn giữa ảnh hoàn hảo */}
+                <div className="h-32 flex items-center justify-center overflow-hidden">
+                  <img 
+                    src={item.productId.image} 
+                    alt={item.productId.name} 
+                    className="max-h-full object-contain hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
                 
-                {/* Info */}
-                <div className="text-yellow-500 text-xs mb-1">★ {p.rating}</div>
-                <h3 className="text-sm font-bold line-clamp-1">{p.name}</h3>
-                <p className="text-gray-400 text-[10px] line-through">{p.oldPrice}</p>
-                <p className="text-red-600 font-bold text-sm">{p.price}</p>
+                {/* Info: Nhóm Tên và Giá thành 1 khối để tránh bị tách rời */}
+                <div className="flex flex-col gap-y-1">
+                  <h3 className="text-sm font-bold line-clamp-2 leading-tight text-gray-800">
+                    {item.productId.name}
+                  </h3>
+                  
+                  <div className="flex items-baseline gap-x-2">
+                    <p className="text-red-600 font-black text-sm">
+                      {item.flashSalePrice.toLocaleString()}đ
+                    </p>
+                    <p className="text-gray-400 text-[10px] line-through">
+                      {item.variantId.price.toLocaleString()}đ
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar: Tự động nằm dưới nhờ flex-col */}
+                <div className="w-full bg-red-200 rounded-full h-6 relative overflow-hidden mt-auto">
+                  <div 
+                    className="bg-red-300 h-full transition-all duration-500" 
+                    style={{ width: `${(item.soldQuantity / item.flashSaleQuantity) * 100}%` }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-gray-700 flex items-center gap-1">
+                      ⚡ Đã bán {item.soldQuantity}/{item.flashSaleQuantity} suất
+                    </span>
+                  </div>
+                </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
