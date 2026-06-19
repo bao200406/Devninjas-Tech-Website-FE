@@ -1,14 +1,14 @@
 import { Award, Play, Share2 } from "lucide-react";
-
+import Logo from "./logo/Logo";
 export default function Footer() {
   return (
     <footer className="bg-[#F8F9FA] border-t border-gray-200 pt-12 pb-8">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="container mx-auto px-6 xl:px-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
         
         {/* Cột 1: Logo & Info */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-[#0052A3]">Azure Logic</h2>
-          <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+        <div className="space-y-2 max-w-sm">
+          <Logo />
+          <p className="text-sm text-gray-500 leading-relaxed max-w-sm">
             Điểm đến tin cậy cho những người yêu công nghệ tại Việt Nam. 
             Chúng tôi tuyển chọn những sản phẩm tốt nhất với trải nghiệm mua sắm đẳng cấp.
           </p>
