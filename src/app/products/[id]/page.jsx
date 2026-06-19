@@ -14,7 +14,7 @@ export default function ProductDetailPage({ params }) {
   // 2. Unwrap params bằng hàm use()
   const resolvedParams = use(params);
   const { id } = resolvedParams;
-  console.log("ID sản phẩm từ params:", id); // Kiểm tra log này để đảm bảo bạn nhận được ID đúng
+  console.log("ID sản phẩm từ params:", id); 
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,8 +28,9 @@ export default function ProductDetailPage({ params }) {
         const variantsRes = await getVariantsByProduct(id);
 
         console.log("Dữ liệu sản phẩm sau khi fetch:", productRes); // Kiểm tra log này
-        
-        setProduct(productRes); // Gán trực tiếp vì hàm service đã return result.data
+        console.log("Dữ liệu biến thể sau khi fetch:", variantsRes);
+
+        setProduct(productRes); 
         setVariants(variantsRes);
       } catch (error) {
         console.error("Lỗi tải dữ liệu:", error);

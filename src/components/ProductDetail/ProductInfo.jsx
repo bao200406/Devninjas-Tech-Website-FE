@@ -14,17 +14,31 @@ export default function ProductInfo({ product, variants }) {
   // 1. Trích xuất danh sách thuộc tính duy nhất từ toàn bộ biến thể
   const allAttributes = variantList.flatMap((v) => v.attributes || []);
 
-  // 2. Dùng useMemo để cố định tham chiếu của mảng
   const colors = useMemo(() => {
-    const allAttributes = variantList.flatMap((v) => v.attributes || []);
-    return Array.from(
-      new Set(
-        allAttributes
-          .filter((a) => a.attributeValueId?.attributeId?.name === "Màu sắc")
-          .map((a) => a.attributeValueId.value)
-      )
-    );
-  }, [variantList]); // Chỉ tính lại khi variantList thay đổi
+  const allAttributes = variantList.flatMap((v) => v.attributes || []);
+  
+    // Dùng Map để đảm bảo mỗi màu chỉ xuất hiện 1 lần
+    const colorMap = new Map();
+
+    allAttributes
+      .filter((a) => a.attributeValueId?.attributeId?.name === "Màu sắc")
+      .forEach((a) => {
+        const attrValue = a.attributeValueId;
+        // Chỉ thêm vào nếu chưa có trong Map
+        if (!colorMap.has(attrValue.value)) {
+          colorMap.set(attrValue.value, {
+            name: attrValue.value,
+            // Lấy swatch từ DB, nếu không có thì mặc định màu xám
+            swatch: attrValue.swatch || "#ccc" 
+          });
+        }
+      });
+
+    // return Array.from(colorMap.values());
+    const result = Array.from(colorMap.values());
+    console.log("Danh sách màu nhận được:", result); // KIỂM TRA LOG NÀY
+    return result;
+  }, [variantList]);
 
   const storages = useMemo(() => {
     const allAttributes = variantList.flatMap((v) => v.attributes || []);
@@ -119,10 +133,15 @@ export default function ProductInfo({ product, variants }) {
         <div className="flex items-center gap-2.5">
           {colors.map((c) => (
             <button
-              key={c}
-              onClick={() => setSelectedColor(c)}
-              className={`w-6.5 h-6.5 rounded-full relative transition-transform ${selectedColor === c ? "ring-2 ring-offset-2 ring-gray-900 scale-105" : "hover:scale-105"}`}
-              style={{ backgroundColor: c.toLowerCase().includes('đen') ? '#333' : c.toLowerCase().includes('trắng') ? '#eee' : '#ccc' }}
+              key={c.name} // Key phải là tên màu để React không bị nhầm
+              onClick={() => setSelectedColor(c.name)} // Cập nhật state theo tên
+              className={`w-6.5 h-6.5 rounded-full relative transition-transform ${
+                selectedColor === c.name 
+                  ? "ring-2 ring-offset-2 ring-gray-900 scale-105" 
+                  : "hover:scale-105"
+              }`}
+              // Truy cập trực tiếp vào thuộc tính swatch của object
+              style={{ backgroundColor: c.swatch }}
             />
           ))}
         </div>

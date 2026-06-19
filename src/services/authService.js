@@ -11,3 +11,15 @@ export const loginUser = async (userData) => {
   const response = await api.post("/auth/login", userData);
   return response.data;
 };
+
+// Hàm mới: Lấy thông tin user hiện tại qua Cookie
+export const getMe = async () => {
+  const response = await api.get("/auth/me");
+  return response.data.data; // Trả về object user
+};
+
+// Bổ sung thêm hàm logout để dùng trong AuthContext
+export const logoutUser = async () => {
+  const response = await api.post("/auth/logout");
+  return response.data;
+};

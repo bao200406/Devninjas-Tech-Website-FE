@@ -1,4 +1,6 @@
 import { Search, User, Heart, Bell, ShoppingCart, Moon, Menu } from "lucide-react";
+import UserSection from "@/components/ui/UserSection";
+import Link from 'next/link';
 
 export default function Header() {
   const menuItems = ["ĐIỆN THOẠI", "LAPTOP", "PHỤ KIỆN", "AUDIO", "GAMING", "ĐỒNG HỒ"];
@@ -6,9 +8,9 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-100">
       {/* Tầng trên: Logo, Tìm kiếm, Icons */}
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4 ">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
         {/* Logo */}
-       <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-700 rounded-md flex items-center justify-center text-white font-bold">
             A
           </div>
@@ -31,42 +33,68 @@ export default function Header() {
         </div>
 
         {/* Icons */}
-        <div className="flex items-center gap-4 md:gap-6 text-gray-700">
-          <User size={20} className="cursor-pointer hidden sm:block" />
-          <Heart size={20} className="cursor-pointer hidden sm:block" />
-          <div className="relative cursor-pointer">
-            <Bell size={20} />
-            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] w-3.5 h-3.5 flex items-center justify-center rounded-full">3</span>
+        <div className="flex items-center gap-2 md:gap-4 text-gray-600">
+          {/* Icon Container cho các nút bấm */}
+          {[
+            { icon: Heart, label: "Wishlist", hidden: "hidden sm:block" },
+            { icon: Bell, label: "Notifications", badge: "3", color: "bg-red-500" },
+            { icon: ShoppingCart, label: "Cart", badge: "2", color: "bg-blue-600" },
+            { icon: Moon, label: "Theme", hidden: "hidden sm:block" },
+          ].map((item, index) => (
+            <button 
+              key={index}
+              className={`relative p-2.5 rounded-full hover:bg-gray-100 hover:text-blue-600 transition-all duration-200 ${item.hidden || ""}`}
+              aria-label={item.label}
+            >
+              <item.icon size={22} strokeWidth={1.8} />
+              {item.badge && (
+                <span className={`absolute top-1 right-1 ${item.color} text-[10px] text-white w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm`}>
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          ))}
+
+          {/* Mobile Menu */}
+          <button className="md:hidden p-2.5 hover:bg-gray-100 rounded-full">
+            <Menu size={24} />
+          </button>
+
+          {/* User Section (giữ nguyên vị trí cuối) */}
+          <div className="ml-2">
+            <UserSection />
           </div>
-          <div className="relative cursor-pointer">
-            <ShoppingCart size={20} />
-            <span className="absolute -top-1 -right-1 bg-blue-900 text-white text-[9px] w-3.5 h-3.5 flex items-center justify-center rounded-full">2</span>
-          </div>
-          <Moon size={20} className="cursor-pointer hidden sm:block" />
-          {/* Nút Menu cho Mobile */}
-          <Menu size={24} className="md:hidden cursor-pointer" />
         </div>
       </div>
 
+      {/* Đường kẻ ngăn cách tinh tế giữa Header và Menu */}
+      <div className="w-full border-b border-gray-100"></div>
+
+
       {/* Tầng dưới: Menu điều hướng & Buttons - Ẩn hoàn toàn trên Mobile */}
-      <div className="hidden md:flex container mx-auto px-4 pb-3 items-center justify-between">
-        <nav className="flex gap-6 lg:gap-8">
+      <div className="hidden md:flex container mx-auto px-4 items-center justify-between h-14">
+        <nav className="flex items-center h-full gap-8">
           {menuItems.map((item, index) => (
             <a
               key={item}
               href="#"
-              className={`text-xs font-bold transition-colors ${index === 0 ? "text-blue-600 border-b-2 border-blue-600 pb-1" : "text-gray-500 hover:text-blue-600"}`}
+              className={`text-sm font-bold uppercase tracking-wide transition-all border-b-2 h-full flex items-center ${
+                index === 0 
+                  ? "text-blue-700 border-blue-700" 
+                  : "text-gray-600 border-transparent hover:text-blue-700 hover:border-blue-700"
+              }`}
             >
               {item}
             </a>
           ))}
         </nav>
 
-        <div className="flex gap-2">
-          <button className="text-blue-900 text-[11px] font-bold px-3 py-2 border border-blue-900 rounded hover:bg-gray-50 whitespace-nowrap">
+        {/* Nhóm CTA Buttons */}
+        <div className="flex items-center gap-3">
+          <button className="text-blue-800 text-[11px] font-bold px-4 py-1.5 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors whitespace-nowrap">
             TRẢ GÓP 0%
           </button>
-          <button className="bg-blue-900 text-white text-[11px] font-bold px-3 py-2 rounded hover:bg-blue-800 whitespace-nowrap">
+          <button className="bg-blue-900 text-white text-[11px] font-bold px-4 py-1.5 rounded-md hover:bg-blue-800 transition-colors whitespace-nowrap">
             THU CŨ ĐỔI MỚI
           </button>
         </div>
