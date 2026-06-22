@@ -11,3 +11,8 @@ export const getOrderByUser = async (params) => {
   const res = await api.get('/orders/my-orders', { params });
   return res.data;
 };
+
+export const getOrderById = async (orderId, config = {} ) => {
+  const response = await api.get(`/orders/${orderId}`, config);
+  return response.data;
+};

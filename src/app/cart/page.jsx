@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Trash2, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import * as cartService from "../../services/cartService"; // Đường dẫn đến file service của bạn
-
+import Link from "next/link";
 export default function CartPage() {
  const [products, setProducts] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
@@ -232,9 +232,11 @@ export default function CartPage() {
             </div>
           </div>
 
-          <button className="mt-8 w-full h-[64px] rounded-[10px] bg-[#0068b3] text-white text-[18px] font-semibold shadow-md transition hover:bg-[#00599a]">
-            Tiến hành thanh toán →
-          </button>
+          <Link href="/checkout">
+            <button className="mt-8 w-full h-[64px] rounded-[10px] bg-[#0068b3] text-white text-[18px] font-semibold shadow-md transition hover:bg-[#00599a]">
+              Tiến hành thanh toán →
+            </button>
+          </Link>
           <button className="mt-4 w-full h-[64px] rounded-[10px] border-2 border-[#d8dde6] bg-white text-[18px] font-semibold text-[#222] transition hover:bg-[#f8f8f8]">
             Tiếp tục mua sắm
           </button>

@@ -33,38 +33,50 @@ export default function Header() {
         </div>
 
         {/* Icons */}
-        <div className="flex items-center gap-2 md:gap-4 text-gray-600">
-          {/* Icon Container cho các nút bấm */}
-          {[
-            { icon: Heart, label: "Wishlist", hidden: "hidden sm:block" },
-            { icon: Bell, label: "Notifications", badge: "3", color: "bg-red-500" },
-            { icon: ShoppingCart, label: "Cart", badge: "2", color: "bg-blue-600" },
-            { icon: Moon, label: "Theme", hidden: "hidden sm:block" },
-          ].map((item, index) => (
-            <button 
-              key={index}
-              className={`relative p-2.5 rounded-full hover:bg-gray-100 hover:text-blue-600 transition-all duration-200 ${item.hidden || ""}`}
-              aria-label={item.label}
-            >
-              <item.icon size={22} strokeWidth={1.8} />
-              {item.badge && (
-                <span className={`absolute top-1 right-1 ${item.color} text-[10px] text-white w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm`}>
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          ))}
+       <div className="flex items-center gap-2 md:gap-4 text-gray-600">
+  {/* Icon Container cho các nút bấm */}
+  {[
+    { icon: Heart, label: "Wishlist", hidden: "hidden sm:block" },
+    { icon: Bell, label: "Notifications", badge: "3", color: "bg-red-500" },
+    { icon: ShoppingCart, label: "Cart", badge: "2", color: "bg-blue-600", href: "/cart" },
+    { icon: Moon, label: "Theme", hidden: "hidden sm:block" },
+  ].map((item, index) => {
+    const content = (
+      <button
+        key={index}
+        className={`relative p-2.5 rounded-full hover:bg-gray-100 hover:text-blue-600 transition-all duration-200 ${item.hidden || ""}`}
+        aria-label={item.label}
+      >
+        <item.icon size={22} strokeWidth={1.8} />
+        {item.badge && (
+          <span
+            className={`absolute top-1 right-1 ${item.color} text-[10px] text-white w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm`}
+          >
+            {item.badge}
+          </span>
+        )}
+      </button>
+    );
 
-          {/* Mobile Menu */}
-          <button className="md:hidden p-2.5 hover:bg-gray-100 rounded-full">
-            <Menu size={24} />
-          </button>
+    return item.href ? (
+      <Link key={index} href={item.href}>
+        {content}
+      </Link>
+    ) : (
+      content
+    );
+  })}
 
-          {/* User Section (giữ nguyên vị trí cuối) */}
-          <div className="ml-2">
-            <UserSection />
-          </div>
-        </div>
+  {/* Mobile Menu */}
+  <button className="md:hidden p-2.5 hover:bg-gray-100 rounded-full">
+    <Menu size={24} />
+  </button>
+
+  {/* User Section (giữ nguyên vị trí cuối) */}
+  <div className="ml-2">
+    <UserSection />
+  </div>
+</div>
       </div>
 
       {/* Đường kẻ ngăn cách tinh tế giữa Header và Menu */}

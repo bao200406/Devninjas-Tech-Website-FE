@@ -2,6 +2,7 @@ import { StatusBadge } from './StatusBadge';
 
 export default function OrderCard({ order }) {
     // 1. Kiểm tra an toàn: Nếu order không tồn tại, trả về null để tránh crash
+    console.log("Dữ liệu order nhận vào OrderCard:", order); // Debug log để kiểm tra dữ liệu đầu vào
   if (!order) return null;
 
   // 2. Sử dụng Optional Chaining (?.) và cung cấp giá trị mặc định để tránh lỗi slice
@@ -25,7 +26,7 @@ export default function OrderCard({ order }) {
         {order.items?.map((item) => (
           <div key={item._id} className="flex gap-4">
             <div className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
-              <img src={item.thumbnail} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
             </div>
             <div className="flex-grow pt-1">
               <p className="text-sm font-semibold text-slate-900 line-clamp-1">{item.name}</p>
