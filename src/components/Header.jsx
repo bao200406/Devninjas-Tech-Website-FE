@@ -1,7 +1,7 @@
 import { Search, User, Heart, Bell, ShoppingCart, Moon, Menu } from "lucide-react";
 import UserSection from "@/components/ui/UserSection";
 import Link from 'next/link';
-
+import Logo from "./logo/Logo";
 export default function Header() {
   const menuItems = ["ĐIỆN THOẠI", "LAPTOP", "PHỤ KIỆN", "AUDIO", "GAMING", "ĐỒNG HỒ"];
 
@@ -10,15 +10,7 @@ export default function Header() {
       {/* Tầng trên: Logo, Tìm kiếm, Icons */}
       <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-700 rounded-md flex items-center justify-center text-white font-bold">
-            A
-          </div>
-
-          <h2 className="text-2xl font-bold text-blue-700">
-            Azure Logic
-          </h2>
-        </div>
+<Logo />
 
         {/* Search Bar - Ẩn trên Mobile, hiện trên Tablet/Desktop */}
         <div className="hidden md:flex flex-1 max-w-2xl mx-4">
