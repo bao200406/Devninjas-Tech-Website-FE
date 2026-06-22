@@ -9,15 +9,35 @@ export default function FlashSaleSection() {
   const [flashSales, setFlashSales] = useState([]); 
   const [timeLeft, setTimeLeft] = useState(""); // State mới để lưu chuỗi đếm ngược
 
-  // 1. Fetch danh sách các khung giờ
+    // 1. Fetch danh sách các khung giờ
   useEffect(() => {
     const fetchTabs = async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
         const res = await getFlashSalesByDate(today);
-        if (res?.data && res.data.length > 0) {
-          setTabs(res.data);
-          setActiveTabId(res.data[0]._id);
+
+        // LOG ĐỂ KIỂM TRA DỮ LIỆU
+      console.log("--- DEBUG START ---");
+      console.log("Danh sách raw từ API:", res.data);
+      console.log("Thời gian hiện tại:", new Date().toLocaleString());
+        
+        if (res?.data && res.data.length > 0) {          
+          // BƯỚC QUAN TRỌNG: Lọc bỏ các tab đã có thời gian kết thúc nhỏ hơn bây giờ
+          // Nếu Backend không trả về endTime, hãy đảm bảo bạn dùng startTime thay thế
+          const validTabs = res.data.filter(tab => {
+            const end = new Date(tab.endTime).getTime();
+            const now = new Date().getTime();
+            return end > now;
+          });
+          setTabs(validTabs);
+
+          if (validTabs.length > 0) {
+            // Luôn chọn tab sớm nhất trong danh sách còn hạn
+            setActiveTabId(validTabs[0]._id);
+          } else {
+            setTabs([]);
+            setActiveTabId(null);
+          }
         }
       } catch (err) {
         console.error("Lỗi khi tải danh sách khung giờ:", err);
@@ -26,21 +46,29 @@ export default function FlashSaleSection() {
     fetchTabs();
   }, []);
 
+
   // 2. Logic Countdown & Cập nhật trạng thái theo thời gian thực
   useEffect(() => {
     const timer = setInterval(() => {
-      const now = new Date();
-      // Tìm tab đang diễn ra để tính countdown
-      const active = tabs.find(t => now >= new Date(t.startTime) && now <= new Date(t.endTime));
+      const now = new Date(); // Dùng đối tượng Date chuẩn
+      
+      const active = tabs.find(t => {
+        const start = new Date(t.startTime);
+        const end = new Date(t.endTime);
+        return now >= start && now <= end;
+      });
       
       if (active) {
-        const diff = new Date(active.endTime) - now;
+        const end = new Date(active.endTime);
+        const diff = end.getTime() - now.getTime(); // So sánh mili-giây
+        
         const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
         const m = Math.floor((diff / 1000 / 60) % 60);
         const s = Math.floor((diff / 1000) % 60);
+        
         setTimeLeft(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
       } else {
-        setTimeLeft(""); // Hết giờ hoặc chưa tới
+        setTimeLeft("");
       }
     }, 1000);
     return () => clearInterval(timer);
@@ -74,10 +102,23 @@ export default function FlashSaleSection() {
           </div>
 
           <div className="flex justify-center gap-2 mb-6 overflow-x-auto pb-2">
-            {tabs.map((tab) => {
-              const now = new Date();
-              const isLive = now >= new Date(tab.startTime) && now <= new Date(tab.endTime);
-              
+           {tabs.map((tab) => {
+             // 1. Dùng trực tiếp dữ liệu từ DB, không cộng offset thủ công
+            const now = new Date(); 
+            const start = new Date(tab.startTime); 
+            const end = new Date(tab.endTime);
+
+            const isLive = now >= start && now <= end;
+            
+            // 2. Debug để kiểm tra lại dữ liệu thực tế
+            console.log(`--- Tab: ${tab.name} ---`);
+            console.log("Bây giờ (VN):", now.toLocaleString());
+            console.log("Start (DB):", start.toLocaleString());
+            console.log("isLive:", isLive);
+
+            // 3. Lấy giờ hiển thị (Dùng getHours() của giờ địa phương VN)
+            const hour = start.getHours().toString().padStart(2, '0');
+            const minute = start.getMinutes().toString().padStart(2, '0');
               return (
                 <button
                   key={tab._id}
@@ -92,7 +133,7 @@ export default function FlashSaleSection() {
                     {isLive ? "Đang diễn ra" : "Sắp diễn ra"}
                   </span>
                   <span className="font-bold">
-                    {new Date(tab.startTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
+                    {`${hour}:${minute}`}
                   </span>
                   
                   {/* Hiển thị Countdown ngay dưới khung giờ nếu đang live */}
