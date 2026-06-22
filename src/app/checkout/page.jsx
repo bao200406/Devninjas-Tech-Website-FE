@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState , useEffect  } from "react";
 import { NotebookPen } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   CreditCard,
   Landmark,
@@ -20,6 +21,7 @@ import { createStripePayment, createCODOrder } from "../../services/paymentServi
 export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [cartItems, setCartItems] = useState([]);
+  const router = useRouter();
 
     const [formData, setFormData] = useState({
     receiverName: "",
@@ -56,27 +58,37 @@ export default function CheckoutPage() {
     const handleSubmit = async (e) => {
       e.preventDefault();
 
-      // 1. Chuẩn bị dữ liệu từ form và phương thức đã chọn
+      // Chuẩn bị dữ liệu từ form và phương thức đã chọn
       const orderData = {
         ...formData,
         paymentMethod: paymentMethod, // 'cod' hoặc 'stripe'
       };
 
       try {
-        // 2. Gửi yêu cầu đặt hàng tới backend
+        // Gửi yêu cầu đặt hàng tới backend
+        // Hàm này bên service trả về trực tiếp response.data của Axios
         const response = await orderService.createOrder(orderData);
 
-        // 3. Xử lý logic dựa trên phản hồi của backend
+        console.log("Cấu trúc thực tế của response:", response);
+
+        // Xử lý logic dựa trên phản hồi của backend
         if (response.success) {
           if (paymentMethod === "stripe" && response.url) {
-            // Nếu là Stripe và có URL, chuyển hướng người dùng sang trang thanh toán
+            // Link bên thứ 3 -> Bắt buộc dùng window.location
             window.location.href = response.url;
           } else {
-            // Nếu là COD, hiển thị thông báo thành công
-            alert("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
-            // Chuyển hướng về trang lịch sử đơn hàng hoặc trang chủ
-            window.location.href = "/order-history"; 
+            // --- TỐI ƯU CHO COD ---
+            // 2. Dự phòng trường hợp Backend trả về tên trường khác nhau (orderId hoặc id hoặc _id)
+           const orderId = response.data.orderCode;
+
+            // alert("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý."); // Có thể giữ hoặc thay bằng Toast
+
+            // 3. Sử dụng router.push để chuyển trang mượt mà không bị load lại trình duyệt
+            router.push(`/checkout/success?order_id=${orderId}`);
           }
+        } else {
+          // Xử lý khi backend trả về success: false kèm message lỗi
+          alert(response.message || "Đặt hàng không thành công, vui lòng thử lại.");
         }
       } catch (error) {
         console.error("Lỗi đặt hàng:", error);
