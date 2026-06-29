@@ -3,12 +3,15 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Package, LogOut, ChevronDown, Settings } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Bổ sung import này
 import { useAuth } from '@/context/AuthContext';
 
 export default function UserSection() {
-  const { user, setUser } = useAuth();
+  // Bổ sung 'logout' vào đây
+  const { user, setUser, logout } = useAuth(); 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const router = useRouter(); // Khởi tạo router
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -19,6 +22,13 @@ export default function UserSection() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Hàm xử lý logout
+  const handleLogout = async () => {
+    await logout();
+    setIsOpen(false);
+    router.push('/login'); // Điều hướng sau khi logout
+  };
 
   if (!user) {
     return (
@@ -43,7 +53,7 @@ export default function UserSection() {
         <ChevronDown size={14} className={`text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu hiện đại */}
+      {/* Dropdown Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
@@ -53,7 +63,6 @@ export default function UserSection() {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="absolute right-0 top-full mt-3 w-60 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 p-2 z-50 overflow-hidden"
           >
-            {/* Header nhỏ trong menu */}
             <div className="px-3 py-2">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tài khoản của tôi</p>
               <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
@@ -72,7 +81,7 @@ export default function UserSection() {
             <div className="h-px bg-gray-100 my-2" />
 
             <button 
-              onClick={() => { /* Gọi API logout ở đây */ }}
+              onClick={handleLogout} // Đã cập nhật gọi hàm xử lý
               className="flex w-full items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"
             >
               <LogOut size={18} /> Đăng xuất

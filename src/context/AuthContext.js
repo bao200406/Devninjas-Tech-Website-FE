@@ -1,7 +1,6 @@
-// context/AuthContext.js
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import { getMe } from "../services/authService"; 
+import { getMe, logoutUser } from "../services/authService"; // Import thêm logoutUser
 
 const AuthContext = createContext();
 
@@ -11,7 +10,7 @@ export function AuthProvider({ children }) {
 
   const loadUser = async () => {
     try {
-      const userData = await getMe(); // Gọi API getMe đã làm
+      const userData = await getMe();
       setUser(userData);
     } catch (err) {
       setUser(null);
@@ -20,12 +19,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Bổ sung hàm logout
+  const logout = async () => {
+    try {
+      await logoutUser(); // Gọi API logout
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      // Dù thành công hay thất bại, đều reset user về null
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
     loadUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loadUser, loading }}>
+    <AuthContext.Provider value={{ user, setUser, loadUser, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
