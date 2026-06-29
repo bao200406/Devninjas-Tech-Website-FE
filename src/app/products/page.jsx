@@ -2,6 +2,7 @@
 import { useState } from "react"; // Bổ sung: Import useState
 import FilterSidebar from "../../components/CategoryProductCard/FilterSidebar";
 import CategoryProductCard from "../../components/CategoryProductCard/ProductList";
+import Pagination from "../../components/ui/Pagination";
 import { X, ChevronDown, LayoutGrid, List, ChevronLeft, ChevronRight, Menu, Filter } from "lucide-react"; // Bổ sung: Thêm icon Filter
 
 export default function ProductsPage() {
@@ -102,36 +103,7 @@ export default function ProductsPage() {
             </div>
 
             {/* Phân trang: Thay đổi bố cục theo thiết bị */}
-            <div className="flex flex-col md:flex-row justify-between items-center mt-10 gap-4">
-            <p className="text-gray-500 text-sm text-center md:text-left">
-                Hiển thị <span className="font-bold text-gray-900">1–12</span> trên <span className="font-bold text-gray-900">256</span> sản phẩm
-            </p>
-
-            <div className="flex items-center gap-2">
-                <button className="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-lg bg-white hover:bg-gray-50">
-                <ChevronLeft size={18} />
-                </button>
-                
-                {[1, 2, 3].map((page) => (
-                <button 
-                    key={page} 
-                    className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                    page === 1 
-                        ? "bg-blue-900 text-white shadow-md" 
-                        : "border border-gray-200 bg-white hover:bg-gray-50"
-                    }`}
-                >
-                    {page}
-                </button>
-                ))}
-
-                <span className="px-2 text-gray-400">...</span>
-                <button className="w-10 h-10 border border-gray-200 rounded-lg bg-white hover:bg-gray-50">22</button>
-                <button className="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-lg bg-white hover:bg-gray-50">
-                <ChevronRight size={18} />
-                </button>
-            </div>
-            </div>
+            <Pagination />
         </main>
       </div>
     </div>
