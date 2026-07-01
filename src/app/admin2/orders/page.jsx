@@ -4,6 +4,7 @@ import {
   Plus, Search, Filter, Download, MoreHorizontal, ChevronLeft, ChevronRight,
   Package, ArrowUpDown, Wallet, AlertCircle, TrendingUp,
 } from "lucide-react";
+import OrderDetailModal from "../../../components/orders/OrderDetailModal";
 import { getAllOrdersAdmin , updateOrderStatusAdmin } from "../../../services/orderService"; 
 
 export default function OrdersPage() {
@@ -12,6 +13,16 @@ export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const STATUS_FLOW = {
+    pending: ["processing", "cancelled"],
+    processing: ["shipping", "cancelled"],
+    shipping: ["delivered"],
+    delivered: [],
+    cancelled: []
+  };
+
 
  // Hàm fetch dữ liệu từ API
   const fetchOrders = async (page = 1, status = "", searchTerm = "") => {
@@ -74,6 +85,7 @@ export default function OrdersPage() {
         alert(msg);
       }
     };
+
 
   return (
     <div className="space-y-6">
@@ -152,56 +164,58 @@ export default function OrdersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                  <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded border-slate-300 accent-slate-900" /></th>
-                  <th className="px-4 py-4">Order ID <ArrowUpDown size={12} className="inline ml-1 opacity-50" /></th>
-                  <th className="px-4 py-4">Customer</th>
-                  <th className="px-4 py-4">Payment</th>
-                  <th className="px-4 py-4">Date</th>
-                  <th className="px-4 py-4">Total</th>
-                  <th className="px-4 py-4">Status</th>
-                  <th className="px-4 py-4 text-right pr-8">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
+                <thead className="text-center">
+                  <tr className="bg-slate-50/50 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded border-slate-300 accent-slate-900" /></th>
+                    <th className="px-4 py-4">Order ID <ArrowUpDown size={12} className="inline ml-1 opacity-50" /></th>
+                    <th className="px-4 py-4">Customer</th>
+                    <th className="px-4 py-4">Payment</th>
+                    <th className="px-4 py-4">Date</th>
+                    <th className="px-4 py-4">Total</th>
+                    <th className="px-4 py-4">Payment Status</th>
+                    <th className="px-4 py-4">Status</th>
+                    <th className="px-4 py-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 text-center">
                 {orders.map((order) => (
                   <tr key={order._id} className="hover:bg-slate-50/50 group">
                     <td className="px-6 py-5"><input type="checkbox" className="rounded border-slate-300 accent-slate-900" /></td>
-                    <td className="px-4 py-5 text-sm font-bold text-slate-900">{order.orderCode}</td>
+                    <td className="px-4 py-5 text-sm font-bold text-slate-900" onClick={() => setSelectedOrder(order)}>{order.orderCode}</td>
                     <td className="px-4 py-5 text-sm text-slate-600">{order.receiverName || "N/A"}</td>
                     <td className="px-4 py-5">
-                    <span className={`inline-flex items-center justify-center min-w-[70px] text-xs font-semibold px-3 py-1.5 rounded-lg border uppercase tracking-wide ${
-                        order.paymentMethod?.toLowerCase() === "stripe" 
-                        ? "bg-indigo-50 text-indigo-700 border-indigo-200" 
-                        : "bg-slate-100 text-slate-700 border-slate-200"
-                    }`}>
+                      <span className={`inline-flex items-center justify-center min-w-[70px] text-xs font-semibold px-3 py-1.5 rounded-lg border uppercase tracking-wide ${order.paymentMethod?.toLowerCase() === "stripe" ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-slate-100 text-slate-700 border-slate-200"}`}>
                         {order.paymentMethod || "COD"}
-                    </span>
+                      </span>
                     </td>
                     <td className="px-4 py-5 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-5 text-sm font-bold text-slate-900">${order.totalPrice}</td>
+                    <td className="px-4 py-5">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${order.paymentStatus === "paid" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
+                        {order.paymentStatus || "Unpaid"}
+                      </span>
+                    </td>
                     <td className="px-4 py-5">
                       <select
                         value={order.status}
                         onChange={(e) => handleStatusChange(order._id, e.target.value)}
                         className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide cursor-pointer outline-none border-none ${
                           order.status === "pending" ? "bg-amber-100 text-amber-700" :
-                          order.status === "paid" ? "bg-emerald-100 text-emerald-700" :
                           order.status === "processing" ? "bg-blue-100 text-blue-700" :
                           order.status === "shipping" ? "bg-cyan-100 text-cyan-700" :
                           order.status === "delivered" ? "bg-green-100 text-green-800" :
                           "bg-rose-100 text-rose-700"
                         }`}
                       >
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipping">Shipping</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value={order.status}>{order.status.toUpperCase()}</option>
+                        {STATUS_FLOW[order.status]?.map((nextStatus) => (
+                          <option key={nextStatus} value={nextStatus}>
+                            {nextStatus.toUpperCase()}
+                          </option>
+                        ))}
                       </select>
                     </td>
-                    <td className="px-4 py-5 text-right pr-8"><button className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl"><MoreHorizontal size={20} /></button></td>
+                    <td className="px-4 py-5 "><button className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl"><MoreHorizontal size={20} /></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -230,6 +244,11 @@ export default function OrdersPage() {
            </div>
         </div>
       </div>
+        <OrderDetailModal 
+          order={selectedOrder} 
+          open={!!selectedOrder} 
+          onOpenChange={(open) => !open && setSelectedOrder(null)} 
+        />
     </div>
   );
 }

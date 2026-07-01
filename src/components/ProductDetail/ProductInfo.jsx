@@ -1,97 +1,122 @@
 import { useState, useEffect, useMemo  } from "react";
 import { Star, Heart, ArrowLeftRight, Truck, ShieldCheck, RefreshCw } from "lucide-react";
 import * as cartService from "../../services/cartService"; // Đường dẫn đến file service của bạn
+import { useAuth } from "../../context/AuthContext";
 
-export default function ProductInfo({ product, variants }) {
+
+export default function ProductInfo({ product, variants, onVariantChange }) {
+  const { user } = useAuth();
   const variantList = variants?.data || [];
 
-  console.log("Dữ liệu variant nhận được từ Props:", variants);
-
-  if (variants?.data?.length > 0) {
-  console.log("Cấu trúc của biến thể đầu tiên:", JSON.stringify(variants.data[0], null, 2));
-}
-
-  // 1. Trích xuất danh sách thuộc tính duy nhất từ toàn bộ biến thể
-  const allAttributes = variantList.flatMap((v) => v.attributes || []);
-
   const colors = useMemo(() => {
-  const allAttributes = variantList.flatMap((v) => v.attributes || []);
-  
-    // Dùng Map để đảm bảo mỗi màu chỉ xuất hiện 1 lần
     const colorMap = new Map();
-
-    allAttributes
+    variantList.flatMap((v) => v.attributes || [])
       .filter((a) => a.attributeValueId?.attributeId?.name === "Màu sắc")
       .forEach((a) => {
         const attrValue = a.attributeValueId;
-        // Chỉ thêm vào nếu chưa có trong Map
         if (!colorMap.has(attrValue.value)) {
-          colorMap.set(attrValue.value, {
-            name: attrValue.value,
-            // Lấy swatch từ DB, nếu không có thì mặc định màu xám
-            swatch: attrValue.swatch || "#ccc" 
-          });
+          colorMap.set(attrValue.value, { name: attrValue.value });
         }
       });
-
-    // return Array.from(colorMap.values());
-    const result = Array.from(colorMap.values());
-    console.log("Danh sách màu nhận được:", result); // KIỂM TRA LOG NÀY
-    return result;
+    return Array.from(colorMap.values());
   }, [variantList]);
 
   const storages = useMemo(() => {
-    const allAttributes = variantList.flatMap((v) => v.attributes || []);
-    return Array.from(
-      new Set(
-        allAttributes
-          .filter((a) => a.attributeValueId?.attributeId?.name === "Dung lượng")
-          .map((a) => a.attributeValueId.value)
-      )
-    );
+    return Array.from(new Set(
+      variantList.flatMap((v) => v.attributes || [])
+        .filter((a) => a.attributeValueId?.attributeId?.name === "Dung lượng")
+        .map((a) => a.attributeValueId.value)
+    ));
   }, [variantList]);
 
-  // 2. State cho lựa chọn người dùng
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
-  const [selectedStorage, setSelectedStorage] = useState(storages[0]);
-  const [selectedVariant, setSelectedVariant] = useState(variantList[0]);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedStorage, setSelectedStorage] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  // 3. Khi danh sách variants thay đổi, cập nhật mặc định
+  // 1. Tự động thiết lập giá trị mặc định khi variantList đã load xong
   useEffect(() => {
-    if (variantList.length > 0) {
-      const first = variantList[0];
-      setSelectedVariant(first);
+    if (variantList.length > 0 && !selectedColor && !selectedStorage) {
+      const defaultVariant = variantList.find(v => v.isDefault) || variantList[0];
       
-      // Tự động chọn giá trị dựa trên biến thể đầu tiên
-      const firstVals = first.attributes.map((a) => a.attributeValueId.value);
-      setSelectedColor(firstVals.find((v) => colors.includes(v)));
-      setSelectedStorage(firstVals.find((v) => storages.includes(v)));
+      const colorAttr = defaultVariant.attributes.find(a => a.attributeValueId.attributeId.name === "Màu sắc");
+      const storageAttr = defaultVariant.attributes.find(a => a.attributeValueId.attributeId.name === "Dung lượng");
+      
+      if (colorAttr) setSelectedColor(colorAttr.attributeValueId.value);
+      if (storageAttr) setSelectedStorage(storageAttr.attributeValueId.value);
     }
   }, [variantList]);
 
-  // 4. Logic tìm biến thể khi người dùng thay đổi lựa chọn
+  // 2. Logic tìm biến thể dựa trên lựa chọn hiện tại
   useEffect(() => {
+    if (variantList.length === 0 || !selectedColor || !selectedStorage) return;
+
     const found = variantList.find((v) => {
       const vals = v.attributes.map((a) => a.attributeValueId.value);
       return vals.includes(selectedColor) && vals.includes(selectedStorage);
     });
-    if (found) setSelectedVariant(found);
-  }, [selectedColor, selectedStorage, variantList]);
 
-  if (!product || !selectedVariant) return null;
+    if (found) {
+      setSelectedVariant(found);
+      onVariantChange?.(found);
+    }
+  }, [selectedColor, selectedStorage, variantList, onVariantChange]);
 
-    const handleAddToCart = async () => {
-    try {
-      // selectedVariant.variantId chính là ID của biến thể đang được chọn
-      // quantity là state số lượng người dùng đã chọn
-      await cartService.addToCart(selectedVariant._id, quantity);
-      
-      alert("Thêm vào giỏ hàng thành công!"); 
-      // Gợi ý: Dùng toast (như react-hot-toast) thay cho alert sẽ chuyên nghiệp hơn
-    } catch (error) {
-      console.error("Lỗi thêm vào giỏ:", error);
-      alert(error.response?.data?.message || "Có lỗi xảy ra khi thêm vào giỏ hàng");
+  // Loading state
+  if (!product) return <div>Đang tải thông tin sản phẩm...</div>;
+  if (!selectedVariant) return <div>Đang tải cấu hình...</div>;
+
+  const handleAddToCart = async () => {
+    // 1. Tính toán logic kiểm tra hàng (giống Backend)
+    const isAvailable = selectedVariant && selectedVariant.stock > 0 && selectedVariant.isActive !== false;
+    
+    // 2. Chặn nếu sản phẩm hết hàng hoặc không khả dụng
+    if (!isAvailable) {
+      alert("Sản phẩm này hiện đã hết hàng hoặc không khả dụng!");
+      return;
+    }
+
+    // 3. Chuẩn bị dữ liệu hiển thị (tương tự như Backend trả về)
+    const variantAttributes = selectedVariant.attributes
+      .map((a) => a.attributeValueId.value)
+      .join(" / ");
+
+    if (user) {
+      try {
+        await cartService.addToCart(selectedVariant._id, quantity, product._id);
+        alert("Thêm vào giỏ hàng thành công!");
+      } catch (error) {
+        alert("Có lỗi xảy ra");
+      }
+    } else {
+      const cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+      const idx = cart.findIndex((item) => item.variantId === selectedVariant._id);
+
+      // Kiểm tra số lượng tồn kho trước khi thêm vào localStorage
+      const currentQtyInCart = idx > -1 ? cart[idx].quantity : 0;
+      if (currentQtyInCart + quantity > selectedVariant.stock) {
+        alert(`Số lượng yêu cầu vượt quá tồn kho (Còn: ${selectedVariant.stock})`);
+        return;
+      }
+
+      if (idx > -1) {
+        cart[idx].quantity += quantity;
+      } else {
+        cart.push({
+          variantId: selectedVariant._id,
+          productId: product._id, // <--- THÊM DÒNG NÀY ĐỂ ĐỒNG BỘ
+          quantity,
+          name: product.name,
+          price: selectedVariant.price,
+          image: selectedVariant.image,
+          variantName: variantAttributes,
+          stock: selectedVariant.stock, // Lưu stock mới nhất vào localStorage
+          isAvailable: true, // Gắn flag để Frontend dùng hiển thị
+          compareAtPrice: selectedVariant.compareAtPrice || null
+        });
+      }
+      localStorage.setItem("guestCart", JSON.stringify(cart));
+      alert("Đã thêm vào giỏ hàng!");
     }
   };
 
@@ -128,24 +153,25 @@ export default function ProductInfo({ product, variants }) {
       </div>
 
       {/* Màu sắc */}
-      <div>
-        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Màu sắc</h3>
-        <div className="flex items-center gap-2.5">
-          {colors.map((c) => (
-            <button
-              key={c.name} // Key phải là tên màu để React không bị nhầm
-              onClick={() => setSelectedColor(c.name)} // Cập nhật state theo tên
-              className={`w-6.5 h-6.5 rounded-full relative transition-transform ${
-                selectedColor === c.name 
-                  ? "ring-2 ring-offset-2 ring-gray-900 scale-105" 
-                  : "hover:scale-105"
-              }`}
-              // Truy cập trực tiếp vào thuộc tính swatch của object
-              style={{ backgroundColor: c.swatch }}
-            />
-          ))}
+      {/* Màu sắc - Hiển thị dạng Tag với giá trị value */}
+        <div>
+          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Màu sắc</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            {colors.map((c) => (
+              <button
+                key={c.name}
+                onClick={() => setSelectedColor(c.name)}
+                className={`px-4 py-2 text-xs font-medium rounded-lg border transition-all ${
+                  selectedColor === c.name 
+                    ? "bg-[#005ba4] text-white border-[#005ba4]" // Trạng thái đang chọn (Active)
+                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50" // Trạng thái bình thường
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
       {/* Dung lượng */}
       <div>

@@ -13,8 +13,8 @@ export const getCart = async () => {
  * @param {string} variantId 
  * @param {number} quantity 
  */
-export const addToCart = async (variantId, quantity) => {
-  const response = await api.post("/cart/items", { variantId, quantity });
+export const addToCart = async (variantId, quantity , productId,) => {
+  const response = await api.post("/cart/items", { variantId, quantity , productId, });
   return response.data;
 };
 
@@ -42,5 +42,13 @@ export const deleteItem = async (variantId) => {
  */
 export const clearCart = async () => {
   const response = await api.delete("/cart/clear");
+  return response.data;
+};
+
+export const updateCartVariant = async (oldVariantId, newVariantId) => {
+  const response = await api.put("/cart/update-variant", { 
+    oldVariantId, 
+    newVariantId 
+  });
   return response.data;
 };

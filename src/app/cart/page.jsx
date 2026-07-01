@@ -3,66 +3,189 @@
 import Image from "next/image";
 import { Trash2, Check } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
+import { LoginRequiredModal } from "../../components/ui/LoginRequiredModal";
+import { ProductVariantPopover } from "../../components/ui/ProductVariantPopover";
 import * as cartService from "../../services/cartService"; // Đường dẫn đến file service của bạn
+import { getVariantsByProduct } from "../../services/variantsService";
+import { useAuth } from "../../context/AuthContext"; // Import hook Auth
 import Link from "next/link";
 export default function CartPage() {
- const [products, setProducts] = useState([]); 
+  const [products, setProducts] = useState([]); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth(); // Lấy thông tin user
+  const [variantsMap, setVariantsMap] = useState({});
+  const router = useRouter();
 
-  // Lấy dữ liệu giỏ hàng từ Backend
+ // Hàm fetchCart cải tiến
   const fetchCart = async () => {
     setIsLoading(true);
-    try {
-      const response = await cartService.getCart();
-      console.log("1. API Raw Response:", response); // Kiểm tra xem API có trả về dữ liệu không
-
-      const cartItems = response?.data?.items || [];
-      console.log("2. Extracted Items:", cartItems); // Kiểm tra xem đã lấy đúng mảng items chưa
-
-      setProducts(cartItems);
-    } catch (err) {
-      console.error("3. Fetch Error:", err); // Nếu vào đây, lỗi nằm ở server hoặc network
-    } finally {
-      setIsLoading(false);
+    if (user) {
+      // 1. Nếu đã đăng nhập: Lấy từ Database
+      try {
+        const response = await cartService.getCart();
+        setProducts(response?.data?.items || []);
+      } catch (err) {
+        console.error("Lỗi lấy giỏ hàng từ DB:", err);
+      }
+    } else {
+      // 2. Nếu chưa đăng nhập: Lấy từ LocalStorage
+      const guestCart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+      setProducts(guestCart);
     }
+    setIsLoading(false);
   };
+
+  // Chạy lại mỗi khi user thay đổi (đăng nhập hoặc đăng xuất)
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [user ]);
+
+  // Hàm load biến thể khi bấm vào Popover
+  // const handleLoadVariants = async (product) => {
+  //   if (!product.productId) return;
+  //   if (variantsMap[product.productId]) return; // Nếu đã có dữ liệu thì dừng
+
+  //   try {
+  //     const res = await getVariantsByProduct(product.productId);
+  //     console.log("DEBUG: Data lấy từ API:", res.data);
+      
+  //     // Dựa vào log của bạn, dữ liệu nằm trong res.data
+  //     const fetchedVariants = res.data; 
+
+  //     if (Array.isArray(fetchedVariants)) {
+  //       setVariantsMap(prev => ({ 
+  //         ...prev, 
+  //         [product.productId]: fetchedVariants // Gán đúng mảng vào key này
+  //       }));
+  //     }
+  //   } catch (err) {
+  //     console.error("Lỗi lấy danh sách biến thể:", err);
+  //   }
+  // };
+
+ const handleLoadVariants = async (product) => {
+  if (!product.productId) return;
+  if (variantsMap[product.productId]) return;
+
+  try {
+    const res = await getVariantsByProduct(product.productId);
+    console.log("DEBUG: Data lấy từ API trả về:", res); 
+    
+    // SỬA Ở ĐÂY: Kiểm tra xem res có phải là mảng không, 
+    // nếu không thì mới thử lấy res.data
+    const fetchedVariants = Array.isArray(res) ? res : res.data;
+
+    if (Array.isArray(fetchedVariants)) {
+      setVariantsMap(prev => ({ 
+        ...prev, 
+        [product.productId]: fetchedVariants 
+      }));
+    } else {
+      console.error("LỖI: Dữ liệu không phải là mảng:", fetchedVariants);
+    }
+  } catch (err) {
+    console.error("Lỗi lấy danh sách biến thể:", err);
+  }
+};
+
+const handleUpdateVariant = async (oldVariantId, newVariant) => {
+    try {
+      if (user) {
+        await cartService.updateCartVariant(oldVariantId, newVariant._id);
+        await fetchCart();
+        alert("Cập nhật phiên bản thành công!");
+      } else {
+        const cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+        const idx = cart.findIndex((item) => item.variantId === oldVariantId);
+
+        if (idx > -1) {
+          // Lấy thông tin từ item cũ để giữ lại name, productId, quantity
+          const existingItem = cart[idx];
+          
+          // Cập nhật với đầy đủ các cột giống hệt lúc push
+          cart[idx] = {
+            ...existingItem, // Giữ lại quantity, name, productId cũ
+            variantId: newVariant._id, // Ghi đè variant mới
+            price: newVariant.price,
+            variantName: newVariant.attributes 
+              ? newVariant.attributes.map(a => a.attributeValueId?.value || a.value).join(" / ")
+              : existingItem.variantName,
+            image: newVariant.image,
+            stock: newVariant.stock,
+            isAvailable: true, // Reset flag
+            compareAtPrice: newVariant.compareAtPrice || null
+          };
+
+          localStorage.setItem("guestCart", JSON.stringify(cart));
+          fetchCart();
+          alert("Đã cập nhật giỏ hàng!");
+        } else {
+          throw new Error("Sản phẩm không có trong giỏ hàng");
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi update variant:", error);
+      // Hiển thị message chi tiết hơn nếu là lỗi logic (ví dụ: lỗi throw new Error ở trên)
+      alert(error.message || "Không thể cập nhật phiên bản!");
+    }
+  };
 
   // Bạn có thể truyền variantId và quantity mới
+ // 1. Cập nhật số lượng
   const handleUpdateQuantity = async (variantId, newQuantity) => {
     try {
-      const result = await cartService.updateQuantity(variantId, newQuantity);
-      console.log("Cập nhật thành công:", result);
-      // Sau khi update, gọi lại hàm lấy giỏ hàng để refresh UI
-      fetchCart(); 
+      // Thử gọi API trước
+      await cartService.updateQuantity(variantId, newQuantity);
+      fetchCart(); // Refresh từ server
     } catch (error) {
-      console.error("Lỗi khi cập nhật:", error);
+      // Nếu lỗi, cập nhật trên localStorage
+      let cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+      const index = cart.findIndex(item => item.variantId === variantId);
+      if (index > -1) {
+        cart[index].quantity = newQuantity;
+        localStorage.setItem("guestCart", JSON.stringify(cart));
+        setProducts(cart); // Update UI ngay lập tức
+      }
     }
   };
 
-    const handleDeleteItem = async (variantId) => {
+  // 2. Xóa 1 sản phẩm
+  const handleDeleteItem = async (variantId) => {
     try {
-      const result = await cartService.deleteItem(variantId);
-      console.log("Đã xóa sản phẩm:", result);
-      // Refresh giỏ hàng sau khi xóa
-      fetchCart();
+      // Thử gọi API trước
+      await cartService.deleteItem(variantId);
+      fetchCart(); // Refresh từ server
     } catch (error) {
-      console.error("Lỗi khi xóa:", error);
+      // Nếu lỗi, xóa trên localStorage
+      let cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+      cart = cart.filter(item => item.variantId !== variantId);
+      localStorage.setItem("guestCart", JSON.stringify(cart));
+      setProducts(cart); // Update UI ngay lập tức
     }
   };
 
-    const handleClearCart = async () => {
+  // 3. Xóa toàn bộ giỏ hàng
+  const handleClearCart = async () => {
     if (confirm("Bạn có chắc chắn muốn xóa sạch giỏ hàng?")) {
       try {
-        const result = await cartService.clearCart();
-        console.log("Đã xóa toàn bộ:", result);
-        // Reset state giỏ hàng về mảng rỗng
+        // Thử gọi API trước
+        await cartService.clearCart();
         setProducts([]); 
       } catch (error) {
-        console.error("Lỗi khi xóa giỏ hàng:", error);
+        // Nếu lỗi, xóa trên localStorage
+        localStorage.removeItem("guestCart");
+        setProducts([]); 
       }
+    }
+  };
+
+  const handleCheckout = () => {
+    if (!user) {
+      setIsModalOpen(true);
+    } else {
+      router.push("/checkout");
     }
   };
 
@@ -130,11 +253,16 @@ export default function CartPage() {
                     </h3>
                     
                     {/* BỔ SUNG: Hiển thị thuộc tính (ví dụ: Màu sắc/Dung lượng) */}
-                    {item.variantName && (
-                      <p className="text-[14px] text-[#6e6e73] mt-1">
-                        {item.variantName}
-                      </p>
-                    )}
+                    <ProductVariantPopover 
+                      key={`${item.variantId}-${variantsMap[item.productId]?.length || 0}`}
+                      currentSelection={{ 
+                        ...item, 
+                        _id: item.variantId // Đảm bảo truyền đúng _id để highlight item đang chọn
+                      }} 
+                      variants={variantsMap[item.productId] ? [...variantsMap[item.productId]] : []}
+                      onOpen={() => handleLoadVariants(item)} // Gọi API khi mở
+                      onSelect={(newVariant) => handleUpdateVariant(item.variantId, newVariant)}
+                    />
 
                     <p className={`mt-2 text-[15px] ${item.isAvailable ? "text-green-600" : "text-red-500"}`}>
                       {item.isAvailable ? "Còn hàng" : "Hết hàng"}
@@ -232,11 +360,19 @@ export default function CartPage() {
             </div>
           </div>
 
-          <Link href="/checkout">
-            <button className="mt-8 w-full h-[64px] rounded-[10px] bg-[#0068b3] text-white text-[18px] font-semibold shadow-md transition hover:bg-[#00599a]">
-              Tiến hành thanh toán →
-            </button>
-          </Link>
+          <button 
+            onClick={handleCheckout} // Gọi hàm kiểm tra
+            className="mt-8 w-full h-[64px] rounded-[10px] bg-[#0068b3] text-white text-[18px] font-semibold shadow-md transition hover:bg-[#00599a]"
+          >
+            Tiến hành thanh toán →
+          </button>
+
+          {/* Render Modal */}
+          <LoginRequiredModal 
+            isOpen={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+          />
+
           <button className="mt-4 w-full h-[64px] rounded-[10px] border-2 border-[#d8dde6] bg-white text-[18px] font-semibold text-[#222] transition hover:bg-[#f8f8f8]">
             Tiếp tục mua sắm
           </button>

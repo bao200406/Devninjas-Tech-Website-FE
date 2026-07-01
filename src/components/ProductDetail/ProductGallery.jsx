@@ -1,23 +1,26 @@
+"use client";
 import { useState, useEffect } from "react";
 
-export default function ProductGallery({ variants }) {
-  // 1. Trích xuất mảng từ thuộc tính 'data' (Dựa trên log của bạn)
-  const variantList = variants?.data || [];
-  
-  // 2. Logic lấy ảnh từ biến thể đầu tiên
-  const activeVariant = variantList.length > 0 ? variantList[0] : null;
-  const variantImages = activeVariant?.images?.length > 0 
-    ? activeVariant.images 
-    : (activeVariant?.image ? [activeVariant.image] : []);
+export default function ProductGallery({ variants, selectedVariant }) {
+  // 1. Lấy danh sách ảnh từ biến thể được chọn
+  const variantImages = selectedVariant?.images?.length > 0 
+    ? selectedVariant.images 
+    : (selectedVariant?.image ? [selectedVariant.image] : []);
   
   const [activeImg, setActiveImg] = useState(variantImages[0]);
 
-  // 3. Cập nhật ảnh chính khi variantList thay đổi
+  // 2. Cập nhật ảnh chính khi biến thể được chọn thay đổi
   useEffect(() => {
+    // Log debug chính xác: kiểm tra xem biến thể có đến được đây không
+    console.log("DEBUG [Gallery]: selectedVariant thay đổi:", selectedVariant);
+    
     if (variantImages.length > 0) {
       setActiveImg(variantImages[0]);
     }
-  }, [variants]); // Theo dõi object variants để khi dữ liệu về thì update lại
+  }, [selectedVariant, variantImages.length]); 
+
+  // Log debug chính xác: kiểm tra xem ảnh chính sau khi tính toán là gì
+  console.log("DEBUG [Gallery]: activeImg hiện tại đang là:", activeImg);
 
   return (
     <div className="flex flex-col gap-4 w-full">
