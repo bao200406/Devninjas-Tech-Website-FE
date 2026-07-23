@@ -29,7 +29,6 @@ export default function ProductSection({ title, products, showCart = false, tag 
                 // Truyền trực tiếp các thuộc tính từ API
                 tag={tag || (p.isFeatured ? "NỔI BẬT" : null)} 
                 soldCount={p.soldCount} 
-                showCart={showCart}
                 image={p.image} // Nhớ truyền thêm ảnh nếu ProductCard cần
               />
             ))}

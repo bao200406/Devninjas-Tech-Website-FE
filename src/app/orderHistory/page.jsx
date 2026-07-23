@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getOrderByUser } from "../../services/orderService";
 import OrderCard from "../../components/ui/OrderCard";
 import Pagination from "../../components/ui/Pagination"; // Import component bạn đã tạo
+import Sidebar from "../../components/account/Sidebar"; // Import component bạn đã tạo
 import Link from 'next/link';
 
 const TABS = [
@@ -15,6 +16,8 @@ const TABS = [
   { label: "ĐÃ GIAO", value: "delivered" },
   { label: "ĐÃ HỦY", value: "cancelled" },
 ];
+
+
 
 export default function OrderHistoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -59,26 +62,7 @@ export default function OrderHistoryPage() {
   return (
     <div className="flex min-h-screen bg-gray-50 p-8 gap-8 font-sans">
       {/* Sidebar giữ nguyên */}
-      <aside className="w-64 bg-white p-6 rounded-2xl shadow-sm h-fit">
-        <h1 className="text-xl font-bold text-blue-900 mb-8 flex items-center gap-2"><Package className="fill-blue-900"/> Azure Logic</h1>
-        {/* ... (Sidebar code của bạn giữ nguyên) ... */}
-        <div className="flex items-center gap-4 mb-8 p-3 rounded-2xl bg-gray-50 border border-gray-100">
-           <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
-             {user.name?.charAt(0).toUpperCase()}
-           </div>
-           <div className="overflow-hidden">
-             <p className="font-bold text-gray-800 truncate">{user.name}</p>
-             <p className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase font-bold inline-block">{user.role || "Member"}</p>
-           </div>
-        </div>
-        <nav className="space-y-2 text-gray-500 text-sm">
-           {[ { icon: User, label: "Personal Info", href: "/account" }, { icon: MapPin, label: "Addresses", href: "/addresses" }, { icon: Package, label: "Order History", active: true, href: "/orders" }, { icon: Settings, label: "Change Password", href: "/settings" }, { icon: Heart, label: "Wishlist", href: "/wishlist" } ].map((item, i) => (
-             <Link key={i} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${item.active ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'hover:bg-gray-50 text-gray-600'}`}>
-               <item.icon size={18} /> {item.label}
-             </Link>
-           ))}
-        </nav>
-      </aside>
+      <Sidebar user={user}/>
 
       {/* Main Content */}
       <main className="flex-1">

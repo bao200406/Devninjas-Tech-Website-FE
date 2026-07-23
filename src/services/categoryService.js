@@ -108,3 +108,22 @@ export const deleteCategory = async (id) => {
     throw error;
   }
 };
+
+export const getFeaturedCategories = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/categories/featured`, {
+      method: "GET",
+      cache: "no-store", // Đảm bảo luôn lấy dữ liệu mới nhất
+    });
+
+    if (!res.ok) {
+      throw new Error("Lỗi khi tải danh mục nổi bật");
+    }
+
+    const result = await res.json();
+    return result.data; // Giả sử API trả về { success: true, data: [...] }
+  } catch (error) {
+    console.error("Error fetching featured categories:", error);
+    return []; // Trả về mảng rỗng nếu có lỗi để tránh lỗi render trên giao diện
+  }
+};

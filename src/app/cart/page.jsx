@@ -10,6 +10,18 @@ import * as cartService from "../../services/cartService"; // Đường dẫn đ
 import { getVariantsByProduct } from "../../services/variantsService";
 import { useAuth } from "../../context/AuthContext"; // Import hook Auth
 import Link from "next/link";
+
+const getPublicUrl = (path) => {
+  if (!path) return "/placeholder.png"; // Trả về ảnh mặc định nếu không có path
+  if (path.startsWith("http")) return path;
+
+  const index = path.indexOf('uploads');
+  if (index === -1) return path;
+  
+  const relativePath = path.substring(index).replace(/\\/g, '/');
+  return `http://localhost:5000/${relativePath}`;
+};
+
 export default function CartPage() {
   const [products, setProducts] = useState([]); 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,28 +54,7 @@ export default function CartPage() {
     fetchCart();
   }, [user ]);
 
-  // Hàm load biến thể khi bấm vào Popover
-  // const handleLoadVariants = async (product) => {
-  //   if (!product.productId) return;
-  //   if (variantsMap[product.productId]) return; // Nếu đã có dữ liệu thì dừng
 
-  //   try {
-  //     const res = await getVariantsByProduct(product.productId);
-  //     console.log("DEBUG: Data lấy từ API:", res.data);
-      
-  //     // Dựa vào log của bạn, dữ liệu nằm trong res.data
-  //     const fetchedVariants = res.data; 
-
-  //     if (Array.isArray(fetchedVariants)) {
-  //       setVariantsMap(prev => ({ 
-  //         ...prev, 
-  //         [product.productId]: fetchedVariants // Gán đúng mảng vào key này
-  //       }));
-  //     }
-  //   } catch (err) {
-  //     console.error("Lỗi lấy danh sách biến thể:", err);
-  //   }
-  // };
 
  const handleLoadVariants = async (product) => {
   if (!product.productId) return;
@@ -237,8 +228,8 @@ const handleUpdateVariant = async (oldVariantId, newVariant) => {
                   </button>
 
                   <div className="w-[120px] shrink-0">
-                    <Image
-                      src={item.image || "/placeholder.png"}
+                    <img
+                      src={getPublicUrl(item.image)}
                       alt="Sản phẩm"
                       width={102}
                       height={102}

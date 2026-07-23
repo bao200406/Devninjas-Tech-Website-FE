@@ -15,6 +15,10 @@ export default function LayoutContent({
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/orderHistory" ||
+    pathname === "/checkout/success" ||
+    pathname === "/forgotPassword" ||
+    pathname === "/changePassword" ||
+    pathname === "/account" ||
     pathname.startsWith("/admin");
 
   if (hideLayout) {

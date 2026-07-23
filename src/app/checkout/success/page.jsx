@@ -196,7 +196,7 @@ export default function CheckoutSuccessPage() {
                             </span>
                         </div>
                         <div className="space-y-2">
-                            <Link href="/dashboard/orders" className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm py-3 px-4 rounded-xl transition-all shadow-sm">
+                            <Link href="/orderHistory" className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm py-3 px-4 rounded-xl transition-all shadow-sm">
                                 Theo dõi đơn hàng
                                 <ArrowRight className="w-4 h-4" />
                             </Link>

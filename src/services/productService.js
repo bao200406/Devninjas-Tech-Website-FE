@@ -137,3 +137,25 @@ export const getHomePageData = async () => {
     throw error;
   }
 };
+
+export const getProductsByCategory = async (categoryId, page = 1, limit = 8, filters = {}) => {
+  try {
+    const queryParams = new URLSearchParams({
+      page,
+      limit,
+      ...(filters.minPrice && { minPrice: filters.minPrice }),
+      ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
+      ...(filters.attributeValueIds?.length > 0 && { attrIds: filters.attributeValueIds.join(',') })
+    }).toString();
+
+    // THÊM DÒNG NÀY ĐỂ DEBUG
+    console.log("DEBUG API CALL:", `/products/category/${categoryId}?${queryParams}`);
+
+    const response = await api.get(`/products/category/${categoryId}?${queryParams}`);
+    return response.data.data;
+  } catch (error) {
+    // THÊM DÒNG NÀY ĐỂ XEM LỖI CỤ THỂ
+    console.error("DEBUG API ERROR:", error.response?.data || error.message);
+    throw error;
+  }
+};

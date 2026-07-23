@@ -3,15 +3,14 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Package, LogOut, ChevronDown, Settings } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Bổ sung import này
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 export default function UserSection() {
-  // Bổ sung 'logout' vào đây
   const { user, setUser, logout } = useAuth(); 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const router = useRouter(); // Khởi tạo router
+  const router = useRouter();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -23,11 +22,10 @@ export default function UserSection() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Hàm xử lý logout
   const handleLogout = async () => {
     await logout();
     setIsOpen(false);
-    router.push('/login'); // Điều hướng sau khi logout
+    router.push('/login');
   };
 
   if (!user) {
@@ -46,8 +44,16 @@ export default function UserSection() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 hover:bg-gray-50 p-1.5 pr-3 rounded-full transition-all border border-transparent hover:border-gray-200"
       >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-xs shadow-md">
-          {user.name?.charAt(0).toUpperCase()}
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-xs shadow-md">
+          {user?.avatar ? (
+            <img 
+              src={`http://localhost:5000/uploads/users/${user.avatar}`} 
+              alt={user?.name} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            user?.name?.charAt(0).toUpperCase() || 'U'
+          )}
         </div>
         <span className="text-sm font-semibold text-gray-700 hidden lg:block">{user.name?.split(' ')[0]}</span>
         <ChevronDown size={14} className={`text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
@@ -74,14 +80,14 @@ export default function UserSection() {
             <Link href="/account" className="flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-xl text-gray-700 hover:text-blue-700 transition-colors">
               <Settings size={18} /> Cài đặt tài khoản
             </Link>
-            <Link href="/orders" className="flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-xl text-gray-700 hover:text-blue-700 transition-colors">
+            <Link href="/orderHistory" className="flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-xl text-gray-700 hover:text-blue-700 transition-colors">
               <Package size={18} /> Đơn hàng của tôi
             </Link>
 
             <div className="h-px bg-gray-100 my-2" />
 
             <button 
-              onClick={handleLogout} // Đã cập nhật gọi hàm xử lý
+              onClick={handleLogout}
               className="flex w-full items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"
             >
               <LogOut size={18} /> Đăng xuất
