@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion"; // Thêm Framer Motion
+import { usePathname } from "next/navigation"; // Import hook để lấy đường dẫn
+import Link from "next/link"; // Import Link để chuyển trang
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   BarChart3,
@@ -16,6 +18,7 @@ import {
 } from "lucide-react";
 
 export default function Sidebar() {
+  const pathname = usePathname(); // Lấy đường dẫn hiện tại
   // Quản lý menu đang mở
   const [openMenus, setOpenMenus] = useState({ Products: true });
 
@@ -30,30 +33,30 @@ export default function Sidebar() {
     {
       title: "OVERVIEW",
       items: [
-        { name: "Dashboard", icon: LayoutDashboard, active: true },
-        { name: "Analytics", icon: BarChart3 },
-        { name: "eCommerce", icon: ShoppingCart },
-        { name: "CRM", icon: Users },
-        { name: "SaaS", icon: Layers },
-        { name: "Charts", icon: PieChart },
+        { name: "Dashboard", icon: LayoutDashboard, href: "/admin2/dashboard" },
+        { name: "Analytics", icon: BarChart3, href: "/admin2/analytics" },
+        { name: "eCommerce", icon: ShoppingCart, href: "admin2/ecommerce" },
+        { name: "CRM", icon: Users, href: "/admin2/crm" },
+        { name: "SaaS", icon: Layers, href: "/admin2/saas" },
+        { name: "Charts", icon: PieChart, href: "/admin2/charts" },
       ],
     },
     {
       title: "COMMERCE",
       items: [
-        { name: "Orders", icon: ShoppingCart, badge: 12 },
+        { name: "Orders", icon: ShoppingCart, href: "/admin2/orders", badge: 12 },
         {
           name: "Products",
           icon: Box,
           hasSubmenu: true,
           submenu: [
-            { name: "List Products", href: "/products" },
-            { name: "Product Details", href: "/product-details" },
-            { name: "Add Product", href: "/admin2/addProduct" },
+            { name: "List Products", href: "/admin2/products" },
+            { name: "Product Details", href: "admin2/product-details" },
+            { name: "Add Product", href: "/admin2/addproduct" },
           ],
         },
-        { name: "Customers", icon: Users },
-        { name: "Invoices", icon: FileText },
+        { name: "Customers", icon: Users, href: "/admin2/users" },
+        { name: "Invoices", icon: FileText, href: "admin2/invoices" },
       ],
     },
   ];
@@ -79,6 +82,9 @@ export default function Sidebar() {
             <ul className="space-y-1">
               {group.items.map((item) => {
                 const isMenuOpen = openMenus[item.name];
+                const isActive = 
+                pathname === item.href || 
+                (item.href === "/admin2/dashboard" && pathname === "/admin2");
 
                 return (
                   <li key={item.name}>
@@ -93,9 +99,7 @@ export default function Sidebar() {
                           <div className="flex items-center gap-3">
                             <item.icon
                               size={18}
-                              className={
-                                isMenuOpen ? "text-black" : "text-slate-400"
-                              }
+                              className={isMenuOpen ? "text-black" : "text-slate-400"}
                             />
                             {item.name}
                           </div>
@@ -107,7 +111,6 @@ export default function Sidebar() {
                           </motion.div>
                         </button>
 
-                        {/* Dropdown Section với Framer Motion */}
                         <AnimatePresence initial={false}>
                           {isMenuOpen && (
                             <motion.ul
@@ -122,13 +125,15 @@ export default function Sidebar() {
                             >
                               {item.submenu.map((sub) => (
                                 <li key={sub.name}>
-                                  <a
+                                  <Link
                                     href={sub.href}
-                                    className="flex items-center gap-3 px-6 py-2 text-[13px] text-slate-500 hover:text-slate-900 rounded-lg transition-colors group"
+                                    className={`flex items-center gap-3 px-6 py-2 text-[13px] rounded-lg transition-colors group ${
+                                        pathname === sub.href ? "text-slate-900 font-semibold" : "text-slate-500 hover:text-slate-900"
+                                    }`}
                                   >
-                                    <div className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-black transition-colors" />
+                                    <div className={`w-1 h-1 rounded-full ${pathname === sub.href ? "bg-black" : "bg-slate-300 group-hover:bg-black"} transition-colors`} />
                                     {sub.name}
-                                  </a>
+                                  </Link>
                                 </li>
                               ))}
                             </motion.ul>
@@ -136,12 +141,11 @@ export default function Sidebar() {
                         </AnimatePresence>
                       </div>
                     ) : (
-                      <a
-                        href="#"
-                        className={`
-                          flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                      <Link
+                        href={item.href}
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
                           ${
-                            item.active
+                            isActive
                               ? "bg-slate-900 text-white shadow-md shadow-slate-200"
                               : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                           }
@@ -154,13 +158,13 @@ export default function Sidebar() {
                         {item.badge && (
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded-full font-bold
-                            ${item.active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}
-                          `}
+                            ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}
+                            `}
                           >
                             {item.badge}
                           </span>
                         )}
-                      </a>
+                      </Link>
                     )}
                   </li>
                 );

@@ -1,8 +1,14 @@
 import { Star, ShoppingCart } from "lucide-react";
-import Link from "next/link"; // 1. Import Link
+import Link from "next/link"; 
+
+const getPublicUrl = (path) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
+  return `http://localhost:5000/uploads/products/${path.replace(/\\/g, '/')}`;
+};
 
 export default function ProductCard({
-  id, // 2. Thêm prop id để nhận từ Section
+  id,
   name,
   price,
   rating,
@@ -12,13 +18,16 @@ export default function ProductCard({
   showCart = false,
 }) {
   const badgeColor = tag === "BÁN CHẠY" ? "bg-gray-900" : "bg-blue-900";
+  
+  // BỔ SUNG: Xử lý giá an toàn để tránh lỗi NaN
+  const safePrice = !isNaN(Number(price)) ? Number(price) : 0;
 
   return (
-    // 3. Bọc toàn bộ card bằng thẻ Link. Sử dụng block để Link bao phủ toàn bộ diện tích
+    // Sử dụng h-full đảm bảo các thẻ trong grid có chiều cao bằng nhau
     <Link href={`/products/${id}`} className="block h-full">
       <div className="bg-white p-4 rounded-xl border border-gray-100 hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
         
-        {/* Hình ảnh - Thêm hiệu ứng hover zoom nhẹ */}
+        {/* Hình ảnh */}
         <div className="relative h-40 mb-3 bg-gray-50 rounded-lg overflow-hidden group">
           {tag && (
             <span
@@ -28,9 +37,9 @@ export default function ProductCard({
             </span>
           )}
 
-          {image ? (
+         {image ? (
             <img
-              src={image}
+              src={getPublicUrl(image)}
               alt={name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -52,23 +61,22 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Tên sản phẩm */}
+        {/* BỔ SUNG: flex-grow giúp tên sản phẩm đẩy giá xuống đáy đồng đều */}
         <h3 className="text-sm font-bold text-gray-900 line-clamp-2 mb-2 flex-grow">
-          {name}
+          {name || "Sản phẩm chưa có tên"}
         </h3>
 
-        {/* Giá & Giỏ hàng */}
+        {/* Giá & Giỏ hàng - mt-auto đẩy khối này xuống đáy */}
         <div className="flex justify-between items-center mt-auto">
           <p className="text-blue-900 font-bold text-lg">
-            {Number(price).toLocaleString("vi-VN")}₫
+            {safePrice.toLocaleString("vi-VN")}₫
           </p>
 
           {showCart && (
             <button 
               className="p-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors duration-300 shadow-sm"
               onClick={(e) => {
-                e.preventDefault(); // Ngăn Link kích hoạt khi click vào nút giỏ hàng
-                // Thêm logic thêm vào giỏ hàng ở đây
+                e.preventDefault(); 
               }}
             >
               <ShoppingCart size={18} />

@@ -29,27 +29,48 @@ export default function LoginPage() {
     setFormData((prev) => ({ ...prev, [name]: value.trim() }));
   };
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     const loadingId = toast.loading("Đang xác thực...");
 
     try {
-      await loginUser(formData);
+      const res = await loginUser(formData);
+      
+      if (!res) {
+        throw new Error("Không nhận được phản hồi từ máy chủ");
+      }
+
+      // Sửa đường dẫn lấy role dựa trên cấu trúc API: res.data.user.role
+      const userRole = res.data?.user?.role;
+      
       toast.update(loadingId, {
         render: "Đăng nhập thành công!",
         type: "success",
         isLoading: false,
         autoClose: 2000,
       });
-      setTimeout(() => router.push("/"), 1500);
+
+      // Điều hướng dựa trên role
+      setTimeout(() => {
+        if (userRole === "admin") {
+          window.location.href = "/admin2/dashboard";
+        } else {
+          window.location.href = "/";
+        }
+      }, 1500);
+
     } catch (err) {
       toast.dismiss(loadingId);
-      toast.error(err.response?.data?.message || "Đăng nhập thất bại, kiểm tra lại thông tin!");
+      
+      const errorMessage = err.response?.data?.message || err.message || "Đăng nhập thất bại!";
+      toast.error(errorMessage);
+      
       setLoading(false);
     }
   };
+
 
   return (
     <motion.div 
@@ -90,7 +111,7 @@ export default function LoginPage() {
 
           <motion.div variants={itemVariants} className="flex items-center justify-between text-sm">
             <label className="flex items-center gap-2"><input type="checkbox" /> Ghi nhớ đăng nhập</label>
-            <a href="#" className="text-blue-700 font-medium">Quên mật khẩu?</a>
+            <a href="/forgotPassword" className="text-blue-700 font-medium">Quên mật khẩu?</a>
           </motion.div>
 
           <motion.button

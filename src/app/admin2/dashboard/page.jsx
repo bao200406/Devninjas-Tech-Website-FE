@@ -12,7 +12,9 @@ import {
   XCircle,
   Star,
   CreditCard,
+  Box,
   MessageSquare,
+  Calendar
 } from "lucide-react";
 import {
   AreaChart,
@@ -27,22 +29,13 @@ import {
   Pie,
   BarChart, Bar
 } from "recharts";
-
-// Data mẫu cho Chart
-const revenueData = [
-  { month: "Jan", revenue: 5000 },
-  { month: "Feb", revenue: 10000 },
-  { month: "Mar", revenue: 7000 },
-  { month: "Apr", revenue: 18000 },
-  { month: "May", revenue: 22000 },
-  { month: "Jun", revenue: 15000 },
-  { month: "Jul", revenue: 25000 },
-  { month: "Aug", revenue: 32000 },
-  { month: "Sep", revenue: 28000 },
-  { month: "Oct", revenue: 42000 },
-  { month: "Nov", revenue: 48000 },
-  { month: "Dec", revenue: 48295 },
-];
+import { useEffect, useState } from "react";
+import { getDashboardStats, getChartData, getCategoryStats } from "../../../services/dashboardService";
+// 1. Import DatePicker và CSS của nó
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+// 2. Import format từ date-fns để gửi dữ liệu đúng định dạng cho Backend
+import { format } from "date-fns";
 
 const trafficData = [
   { name: "Direct", value: 35, color: "#F97316" },
@@ -169,48 +162,159 @@ const recentActivity = [
 ];
 
 export default function Dashboard() {
+
+  const [days, setDays] = useState("30");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [categoryData, setCategoryData] = useState([]);
+  const [activeTab, setActiveTab] = useState("Revenue"); // Tab hiện tại
+  const [chartData, setChartData] = useState([]);
+
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalProducts: 0,
+    totalCustomers: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+ useEffect(() => {
+  // 1. Chặn các trường hợp ngày tháng chưa sẵn sàng
+  if (days === "custom" && (!startDate || !endDate)) return;
+  
+  // 2. Nếu days != "custom", ta nên tạo ngày mặc định hoặc xử lý riêng
+  // Nếu vẫn gọi API khi chưa có startDate/endDate cho các mode "30", "7"..., 
+  // hãy chắc chắn service của bạn tự xử lý mặc định ở phía Backend.
+  
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Đảm bảo startDate/endDate được format đúng định dạng trước khi gửi
+      // Dùng optional chaining hoặc kiểm tra tồn tại
+      const sDate = startDate ? new Date(startDate).toISOString() : null;
+      const eDate = endDate ? new Date(endDate).toISOString() : null;
+
+      const [statsResult, chartResult, categories] = await Promise.all([
+        getDashboardStats(days, sDate, eDate),
+        getChartData(days, sDate, eDate),
+        getCategoryStats(days, sDate, eDate) // Truyền ngày đã format
+      ]);
+
+      const colors = ["#F97316", "#3B82F6", "#10B981", "#F59E0B", "#8B5CF6"];
+      const formattedCategoryData = (categories?.data || []).map((item, index) => ({
+        ...item,
+        color: colors[index % colors.length]
+      }));
+
+      setCategoryData(formattedCategoryData);
+      setStats(statsResult.data);
+      setChartData(chartResult.data);
+      
+    } catch (error) {
+      console.error("Lỗi khi tải dữ liệu:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [days, startDate, endDate]);
+
+  if (loading) return <div>Loading...</div>;
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl front-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 text-sm">
-          Welcome back, Aigars. Here&apos;s what&apos;s happening with your
-          business today.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+        <div className="flex justify-between items-center">
+          <p className="text-slate-500 text-sm">Welcome back, Aigars...</p>
+          
+          {/* Bộ lọc thời gian */}
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+          <Calendar size={16} className="text-slate-400" />
+          
+          <select 
+            className="text-sm font-bold text-slate-900 outline-none bg-transparent cursor-pointer"
+            onChange={(e) => {
+              const value = e.target.value;
+              setDays(value);
+              // Reset ngày nếu chuyển sang chế độ khác
+              if (value !== "custom") {
+                setStartDate("");
+                setEndDate("");
+              }
+            }}
+            value={days}
+          >
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="custom">Custom Date</option>
+          </select>
+
+          {/* ĐẶT ĐOẠN CODE DATETPICKER CỦA BẠN VÀO ĐÂY */}
+          {days === "custom" && (
+            <div className="flex items-center gap-2 border-l pl-4 ml-2 border-slate-200">
+              <DatePicker
+                selected={startDate}
+                onChange={(date) => setStartDate(date)}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                placeholderText="Start"
+                dateFormat="dd/MM/yyyy"
+                className="w-24 text-sm font-bold text-slate-900 outline-none bg-transparent cursor-pointer"
+              />
+              <span className="text-slate-400">-</span>
+              <DatePicker
+                selected={endDate}
+                onChange={(date) => setEndDate(date)}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate}
+                placeholderText="End"
+                dateFormat="dd/MM/yyyy"
+                className="w-24 text-sm font-bold text-slate-900 outline-none bg-transparent cursor-pointer"
+              />
+            </div>
+          )}
+        </div>
+        </div>
       </div>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard
           title="Total Revenue"
-          value="$48,295"
+          value={`$${stats.totalRevenue.toLocaleString()}`}
           trend="+12.5%"
           trendUp={true}
           icon={DollarSign}
           color="orange"
         />
         <StatCard
-          title="Active Users"
-          value="2,847"
-          trend="+8.2%"
-          trendUp={true}
-          icon={Users}
-          color="green"
-        />
-        <StatCard
           title="Total Orders"
-          value="1,432"
+          value={stats.totalOrders}
           trend="-3.1%"
           trendUp={false}
           icon={ShoppingBag}
           color="blue"
         />
         <StatCard
-          title="Page Views"
-          value="284K"
-          trend="+24.7%"
+          title="Total Products"
+          value={stats.totalProducts}
+          trend="+2.4%"
           trendUp={true}
-          icon={Eye}
+          icon={Box} // Bạn cần import thêm icon "Box" từ "lucide-react"
           color="yellow"
+        />
+        <StatCard
+          title="Total Customers"
+          value={stats.totalCustomers}
+          trend="+5.7%"
+          trendUp={true}
+          icon={Users}
+          color="green"
         />
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -223,24 +327,25 @@ export default function Dashboard() {
                   Monthly performance for the current year
                 </p>
               </div>
-              <div className="flex bg-slate-50 p-1 rounded-lg gap-1">
-                {["Revenue", "Orders", "Profit"].map((tab) => (
-                  <button
-                    key={tab}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                      tab === "Revenue" ? "bg-white shadow-sm text-slate-900" : "text-slate-400"
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+             <div className="flex bg-slate-50 p-1 rounded-lg gap-1">
+              {["Revenue", "Orders", "AOV"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                    tab === activeTab ? "bg-white shadow-sm text-slate-900" : "text-slate-400"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
               </div>
             </div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueData}>
+                <BarChart data={chartData}>
                   <XAxis
-                    dataKey="month"
+                    dataKey="date" // Đã đổi từ "month" sang "date" (trường dữ liệu từ API)
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: "#94a3b8" }}
@@ -249,52 +354,60 @@ export default function Dashboard() {
                   <YAxis hide />
                   <Tooltip />
                   <Bar
-                    dataKey="revenue"
-                    fill="#F97316"
+                    dataKey={activeTab.toLowerCase()} // Tự động đổi theo tab: "revenue", "orders", hoặc "aov"
+                    fill={
+                      activeTab === "Revenue" ? "#F97316" : 
+                      activeTab === "Orders" ? "#3B82F6" : "#10B981"
+                    }
                     radius={[4, 4, 0, 0]}
+                    animationDuration={500} // Thêm hiệu ứng chuyển động mượt mà khi đổi tab
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
+        </div>
 
         {/* Traffic Sources */}
+        {/* Product Categories */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-slate-900">Traffic Sources</h3>
+          <h3 className="font-bold text-slate-900">Product Categories</h3>
           <p className="text-xs text-slate-400 mb-6">
-            Where your visitors come from
+            Sales distribution by category
           </p>
 
           <div className="relative h-[200px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={trafficData}
+                  data={categoryData} // Dùng dữ liệu thật từ API
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
+                  cornerRadius={4}
                 >
-                  {trafficData.map((entry, index) => (
+                  {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold">284K</span>
+            
+            {/* Hiển thị tổng số lượng sản phẩm bán ra ở giữa */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold">
+                {categoryData.reduce((sum, item) => sum + item.value, 0)}
+              </span>
               <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">
-                Visits
+                Units Sold
               </span>
             </div>
           </div>
 
+          {/* Danh sách các danh mục */}
           <div className="mt-6 space-y-3">
-            {trafficData.map((item) => (
-              <div
-                key={item.name}
-                className="flex items-center justify-between"
-              >
+            {categoryData.map((item) => (
+              <div key={item.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
                     className="w-2 h-2 rounded-full"
@@ -305,7 +418,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <span className="text-sm font-bold text-slate-900">
-                  {item.value}%
+                  {item.value} {/* Hiển thị số lượng thay vì % */}
                 </span>
               </div>
             ))}

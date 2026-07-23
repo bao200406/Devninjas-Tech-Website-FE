@@ -9,6 +9,8 @@ import FlashSaleSection from "@/components/home/FlashSaleSection";
 import ProductSection from "@/components/home/ProductSection";
 import BlogSection from "@/components/home/BlogSection";
 import FeedbackSection from "@/components/home/FeedbackSection";
+import BrandSection from "@/components/home/BrandSection";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function Home() {
 
@@ -61,6 +63,10 @@ export default function Home() {
         <div data-aos="fade-up">
           <ProductSection title="SẢN PHẨM BÁN CHẠY" products={bestSellers} showCart={true} tag="BÁN CHẠY"/>
         </div>
+
+        <div data-aos="fade-up">
+          <BrandSection />
+        </div>
         
         <div data-aos="fade-up">
           <BlogSection />
@@ -70,6 +76,9 @@ export default function Home() {
         </div>
         
       </main>
+
+      {/* ĐẶT COMPONENT Ở ĐÂY: Ngay dưới main, nhưng trong thẻ cha */}
+      <ThemeToggle />
 
     </div>
   );

@@ -21,7 +21,7 @@ export default function HeroSection() {
   if (!data?.data || data.data.length === 0) return null;
 
   return (
-    <section className="bg-white py-12">
+    <section className="">
       <div className="container mx-auto px-4">
         {/* 3. Cấu hình Swiper để sửa lỗi tự động chuyển và chồng nội dung */}
        <Swiper

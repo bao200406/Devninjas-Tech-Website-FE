@@ -32,8 +32,8 @@ export default function ProductList({ name, price, rating, reviews, tag }) {
         </div>
 
         {/* Tên sản phẩm - Giới hạn tối đa 2 dòng */}
-        <h3 className="text-sm font-bold text-gray-900 line-clamp-2 h-10 leading-snug">
-          {name}
+        <h3 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
+          {name} 
         </h3>
       </div>
 

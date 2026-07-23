@@ -16,11 +16,34 @@ import {
 } from "lucide-react";
 import * as orderService from "../../services/orderService";
 import {getCart} from "../../services/cartService";
+import { getAvailableVouchers, applyVoucher } from "../../services/voucherService";
 import { createStripePayment, createCODOrder } from "../../services/paymentService";
 
+const getPublicUrl = (path) => {
+  if (!path) return "/placeholder.png"; // Trả về ảnh mặc định nếu không có path
+  if (path.startsWith("http")) return path;
+
+  const index = path.indexOf('uploads');
+  if (index === -1) return path;
+  
+  const relativePath = path.substring(index).replace(/\\/g, '/');
+  return `http://localhost:5000/${relativePath}`;
+};
+
 export default function CheckoutPage() {
+ 
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [cartItems, setCartItems] = useState([]);
+  const [availableVouchers, setAvailableVouchers] = useState(null);
+  const [isVoucherListOpen, setIsVoucherListOpen] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+   const subtotal = cartItems.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0
+  );
+  const [appliedVoucher, setAppliedVoucher] = useState(null); // Lưu thông tin voucher đã chọn
+  const [discount, setDiscount] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(subtotal);
   const router = useRouter();
 
     const [formData, setFormData] = useState({
@@ -55,63 +78,97 @@ export default function CheckoutPage() {
       fetchCart();
     }, []);
 
+    // Thêm vào ngay sau khi khai báo các useState
+    useEffect(() => {
+      const initDraftOrder = async () => {
+        try {
+          // Gọi API tạo đơn nháp (đảm bảo Backend của bạn có API này)
+          // Chỉ cần gửi thông tin tối thiểu để có orderId
+          const response = await orderService.createOrder({ 
+            status: 'draft', 
+            cartItems: cartItems 
+          });
+          if (response.success) {
+            setOrderId(response.data.orderId || response.data.orderCode); 
+          }
+        } catch (err) {
+          console.error("Lỗi tạo đơn nháp:", err);
+        }
+      };
+
+      if (cartItems.length > 0) initDraftOrder();
+    }, [cartItems]); // Chạy khi có giỏ hàng
+
     const handleSubmit = async (e) => {
       e.preventDefault();
+      
+      if (!orderId) return alert("Đang khởi tạo đơn hàng, vui lòng thử lại sau giây lát.");
 
-      // Chuẩn bị dữ liệu từ form và phương thức đã chọn
       const orderData = {
         ...formData,
-        paymentMethod: paymentMethod, // 'cod' hoặc 'stripe'
+        paymentMethod: paymentMethod,
+        voucherId: appliedVoucher?._id,
+        status: 'pending' // Chuyển trạng thái sang chờ thanh toán
       };
 
       try {
-        // Gửi yêu cầu đặt hàng tới backend
-        // Hàm này bên service trả về trực tiếp response.data của Axios
-        const response = await orderService.createOrder(orderData);
+        // Dùng updateOrder thay vì createOrder
+        const response = await orderService.updateOrder(orderId, orderData);
 
-        console.log("Cấu trúc thực tế của response:", response);
-
-        // Xử lý logic dựa trên phản hồi của backend
         if (response.success) {
           if (paymentMethod === "stripe" && response.url) {
-            // Link bên thứ 3 -> Bắt buộc dùng window.location
             window.location.href = response.url;
           } else {
-            // --- TỐI ƯU CHO COD ---
-            // 2. Dự phòng trường hợp Backend trả về tên trường khác nhau (orderId hoặc id hoặc _id)
-           const orderId = response.data.orderCode;
-
-            // alert("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý."); // Có thể giữ hoặc thay bằng Toast
-
-            // 3. Sử dụng router.push để chuyển trang mượt mà không bị load lại trình duyệt
             router.push(`/checkout/success?order_id=${orderId}`);
           }
-        } else {
-          // Xử lý khi backend trả về success: false kèm message lỗi
-          alert(response.message || "Đặt hàng không thành công, vui lòng thử lại.");
         }
       } catch (error) {
-        console.error("Lỗi đặt hàng:", error);
-        alert(error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.");
+        console.error("Lỗi chốt đơn:", error);
+        alert(error.response?.data?.message || "Có lỗi xảy ra khi xác nhận đơn hàng.");
       }
     };
 
 
 
-          // Tạm tính
-      const subtotal = cartItems.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      );
+      useEffect(() => {
+        const fetchVouchers = async () => {
+          if (subtotal > 0) {
+            try {
+              const response = await getAvailableVouchers(subtotal);
+              setAvailableVouchers(response.data);
+            } catch (error) {
+              console.error("Không lấy được voucher:", error);
+            }
+          }
+        };
+        fetchVouchers();
+      }, [subtotal]); // Cập nhật lại khi subtotal thay đổi
+
+      const handleApplyVoucher = async (voucher) => {
+        console.log("Voucher đang áp dụng:", voucher);
+        try {
+          if (!orderId) return alert("Đang khởi tạo đơn hàng, vui lòng đợi...");
+           console.log("OrderID:", orderId);
+          // Gọi API của bạn để Backend tính toán và lưu voucher vào Database
+          const result = await applyVoucher(voucher.code, orderId);
+
+          // Cập nhật state với dữ liệu trả về từ Backend
+          setDiscount(result.data.discount);
+          setTotalPrice(result.data.finalPrice);
+          setAppliedVoucher(voucher);
+          setIsVoucherListOpen(false);
+
+          console.log("Giá trị totalPrice mới:", result);
+          
+          alert("Áp dụng mã thành công!");
+        } catch (error) {
+          alert(error.response?.data?.message || "Không thể áp dụng voucher");
+        }
+      };
 
       // Tạm thời chưa làm ship
       const shippingFee = 0;
 
-      // Tạm thời chưa làm voucher
-      const discount = 0;
-
-      // Tổng tiền
-      const totalPrice = subtotal + shippingFee - discount;
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] px-4 py-6">
@@ -351,10 +408,9 @@ export default function CheckoutPage() {
                 {cartItems.map((item, index) => (
                   <div key={index} className="flex gap-4">
                     <div className="relative h-16 w-16 overflow-hidden rounded-lg border bg-white">
-                      <Image
-                        src={item.image}
+                      <img
+                        src={getPublicUrl(item.image)}
                         alt={item.name}
-                        fill
                         className="object-cover"
                       />
                     </div>
@@ -379,16 +435,38 @@ export default function CheckoutPage() {
               </div>
 
               {/* Voucher */}
-              <div className="mt-6 flex gap-3">
-                <input
-                  type="text"
-                  placeholder="Mã giảm giá / Voucher"
-                  className="flex-1 rounded-lg border border-gray-300 bg-[#CCCCCC] px-4 py-3 outline-none"
-                />
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-semibold text-gray-800">Chọn Voucher</h3>
+                  <button 
+                    type="button"
+                    onClick={() => setIsVoucherListOpen(!isVoucherListOpen)} 
+                    className="text-sm text-[#005BAC] hover:underline"
+                  >
+                    {isVoucherListOpen ? "Ẩn bớt" : "Xem tất cả"}
+                  </button>
+                </div>
 
-                <button className="rounded-lg bg-[#336699] px-5 font-medium text-white">
-                  Áp dụng
-                </button>
+                {isVoucherListOpen && (
+                  <div className="space-y-2 mt-2 max-h-40 overflow-y-auto border p-2 rounded-lg bg-white">
+                    {availableVouchers.length > 0 ? (
+                      availableVouchers.map((v) => (
+                        <div key={v._id} className="flex justify-between items-center p-2 border-b last:border-0 text-sm">
+                          <span>{v.code} - Giảm {v.type === 'percentage' ? `${v.value}%` : `${v.value.toLocaleString()}đ`}</span>
+                          <button 
+                            type="button"
+                            onClick={() => handleApplyVoucher(v)} // Hàm này bạn sẽ định nghĩa bên dưới
+                            className="px-3 py-1 bg-[#005BAC] text-white rounded text-xs"
+                          >
+                            Chọn
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-400 p-2">Không có voucher khả dụng</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Total */}
@@ -415,8 +493,8 @@ export default function CheckoutPage() {
                   <span>Giảm giá</span>
 
                   <span className="text-[#663300]">
-                    -{discount.toLocaleString("vi-VN")}đ
-                  </span>
+                      -{discount?.toLocaleString("vi-VN") || 0}đ
+                    </span>
                 </div>
 
                 <div className="flex items-center justify-between border-t pt-4 text-lg font-bold">

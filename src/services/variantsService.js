@@ -40,7 +40,7 @@ export const createVariants = async (formData) => {
   }
 };
 
-export const updateVariants = async (formData, id) => {
+export const updateVariants = async (id, formData) => {
   try {
     const res = await fetch(`${API_URL}/api/variants/${id}`, {
       method: "PUT",

@@ -1,10 +1,21 @@
 "use client"
-import { useState } from 'react'; // 1. Thêm useState
+import { useState } from 'react';
 import { StatusBadge } from './StatusBadge';
 import { useOrderActions } from '../../hooks/useOrderActions';
-import { ActionMenu } from '../../components/ui/ActionMenu'; // Giả định bạn đã có file này
-// 2. Import các component của Shadcn/UI Dialog
+import { ActionMenu } from '../../components/ui/ActionMenu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
+import ReviewModal from "../../components/modals/ReviewModal";
+
+const getPublicUrl = (path) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
+
+  const index = path.indexOf('uploads');
+  if (index === -1) return path;
+  
+  const relativePath = path.substring(index).replace(/\\/g, '/');
+  return `http://localhost:5000/${relativePath}`;
+};
 
 export default function OrderCard({ order }) {
   // 1. Hook phải gọi ở top-level
@@ -13,6 +24,9 @@ export default function OrderCard({ order }) {
   // 3. State quản lý Modal Hủy đơn
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+
+  // State quản lý Modal Đánh giá
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // 2. Kiểm tra an toàn
   if (!order) return null;
@@ -34,6 +48,9 @@ export default function OrderCard({ order }) {
   const orderId = order._id?.slice(-6)?.toUpperCase() || "N/A";
   const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
+  // Lấy sản phẩm đầu tiên trong đơn hàng để truyền orderDetailId vào ReviewModal
+  const firstItem = order.items?.[0];
+
   return (
     <div className="group bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300">
       {/* Header: ID & Status */}
@@ -43,29 +60,31 @@ export default function OrderCard({ order }) {
           <h3 className="font-extrabold text-slate-800 text-lg">#{orderId}</h3>
         </div>
         {/* Dropdown cho các hành động phụ */}
-          {secondaryActions.length > 0 && (
-            <ActionMenu 
-              items={secondaryActions.map(action => ({
-                label: action.label,
-                onClick: () => handleActionClick(action.action)
-              }))} 
-            />
-          )}
+        {secondaryActions.length > 0 && (
+          <ActionMenu 
+            items={secondaryActions.map(action => ({
+              label: action.label,
+              onClick: () => handleActionClick(action.action)
+            }))} 
+          />
+        )}
       </div>
 
       {/* Body: Product Info List */}
       <div className="space-y-4 mb-6 flex justify-between items-center">
-        {order.items?.map((item) => (
-          <div key={item._id} className="flex gap-4">
-            <div className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
-              <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+        <div className="space-y-3 w-full">
+          {order.items?.map((item) => (
+            <div key={item._id} className="flex gap-4">
+              <div className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 shrink-0">
+                <img src={getPublicUrl(item.image)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              </div>
+              <div className="flex-grow pt-1">
+                <p className="text-sm font-semibold text-slate-900 line-clamp-1">{item.name}</p>
+                <p className="text-xs text-slate-500 mt-1">Số lượng: x{item.quantity}</p>
+              </div>
             </div>
-            <div className="flex-grow pt-1">
-              <p className="text-sm font-semibold text-slate-900 line-clamp-1">{item.name}</p>
-              <p className="text-xs text-slate-500 mt-1">Số lượng: x{item.quantity}</p>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
         <StatusBadge status={order.status} />
       </div>
 
@@ -82,8 +101,18 @@ export default function OrderCard({ order }) {
             Xem chi tiết
           </button>
 
-          {/* Nút hành động chính (Primary) */}
-          {primaryAction && (
+          {/* Nút Viết đánh giá: Nằm ngay cạnh nút Xem chi tiết khi đơn hàng ở trạng thái 'delivered' */}
+          {order.status === 'delivered' && (
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition-all"
+            >
+              Đánh giá
+            </button>
+          )}
+
+          {/* Nút hành động chính (Primary) - Chỉ hiển thị khi không phải là delivered */}
+          {primaryAction && order.status !== 'delivered' && (
             <button
               onClick={() => handleActionClick(primaryAction.action)}
               disabled={loading}
@@ -92,16 +121,12 @@ export default function OrderCard({ order }) {
               {loading ? "Đang xử lý..." : primaryAction.label}
             </button>
           )}
-
-          
         </div>
       </div>
 
       {/* 5. Dialog Hủy đơn hàng (Đặt ngay trong card) */}
       <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
         <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden bg-white border-0 ring-0 shadow-2xl shadow-slate-200 rounded-3xl">
-          
-          {/* Header */}
           <DialogHeader className="p-8 pb-2 space-y-3">
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-2">
               <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +141,6 @@ export default function OrderCard({ order }) {
             </DialogDescription>
           </DialogHeader>
 
-          {/* Input Area */}
           <div className="px-8 py-4">
             <textarea 
               className="w-full min-h-[120px] p-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-red-100 outline-none transition-all resize-none placeholder:text-slate-400"
@@ -126,7 +150,6 @@ export default function OrderCard({ order }) {
             />
           </div>
 
-          {/* Footer: Bỏ nền xám, để trắng hoàn toàn */}
           <DialogFooter className="p-8 pt-2 flex flex-row gap-3 bg-white border-0">
             <button 
               onClick={() => setShowCancelModal(false)}
@@ -147,6 +170,19 @@ export default function OrderCard({ order }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Review Modal: Truyền chính xác orderDetailId (item._id) */}
+      {firstItem && (
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          orderDetailId={firstItem._id}
+          productInfo={firstItem}
+          onSuccess={() => {
+            alert("Đánh giá thành công!");
+          }}
+        />
+      )}
     </div>
   );
 }

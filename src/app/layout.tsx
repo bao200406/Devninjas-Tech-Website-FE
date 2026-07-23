@@ -8,6 +8,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // BẮT BUỘC ĐỂ CÓ CSS PROGRESS BAR
 import Providers from "./Providers/providers"
 import AOSProvider from "./Providers/AOSProvider";
+import { ThemeProvider } from "next-themes";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -38,7 +40,7 @@ export default function RootLayout({
         <AuthProvider>
           <Providers>
             <AOSProvider>
-              <LayoutManager>{children}</LayoutManager>
+              <LayoutManager>{children} </LayoutManager>
             </AOSProvider>
             <ToastContainer 
               position="top-right"

@@ -1,6 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
 
+// Hàm helper để chuyển đổi đường dẫn cục bộ thành URL công khai
+const getPublicUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+
+  // Cắt bỏ phần đường dẫn ổ đĩa và lấy từ chữ 'uploads' trở về sau
+  // Sau đó đổi toàn bộ dấu '\' (Windows) thành '/' (URL chuẩn)
+  const index = path.indexOf('uploads');
+  if (index === -1) return path; // Trả về nguyên bản nếu không tìm thấy chữ 'uploads'
+  
+  const relativePath = path.substring(index).replace(/\\/g, '/');
+  return `http://localhost:5000/${relativePath}`;
+};
+
+
 export default function ProductGallery({ variants, selectedVariant }) {
   // 1. Lấy danh sách ảnh từ biến thể được chọn
   const variantImages = selectedVariant?.images?.length > 0 
@@ -33,7 +48,11 @@ export default function ProductGallery({ variants, selectedVariant }) {
 
         <div className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center">
           {activeImg ? (
-            <img src={activeImg} alt="Product" className="w-full h-full object-contain" />
+           <img 
+              src={getPublicUrl(activeImg)} // Áp dụng hàm xử lý tại đây
+              alt="Product" 
+              className="w-full h-full object-contain" 
+            />
           ) : (
             <div className="text-gray-400 text-sm font-medium">Đang tải ảnh...</div>
           )}
@@ -52,7 +71,11 @@ export default function ProductGallery({ variants, selectedVariant }) {
                 : "border-gray-200 hover:border-gray-400"
             }`}
           >
-            <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover rounded-lg" />
+            <img 
+              src={getPublicUrl(img)} // Áp dụng hàm xử lý tại đây
+              alt={`Thumb ${idx + 1}`} 
+              className="w-full h-full object-cover rounded-lg" 
+            />
           </button>
         ))}
       </div>

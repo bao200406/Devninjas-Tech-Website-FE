@@ -20,6 +20,8 @@ import Link from "next/link";
 import { getAllProducts, deleteProduct } from "../../services/productService";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
+// Đảm bảo đã import useRouter
+import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 
 export default function ProductPage() {
@@ -28,6 +30,7 @@ export default function ProductPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownRef = useRef(null);
+  const router = useRouter();
 
   const fetchProducts = async () => {
     try {
@@ -100,7 +103,7 @@ export default function ProductPage() {
           </p>
         </div>
         <Link
-          href="/admin2/products/addProduct"
+          href="/admin2/products/addproduct"
           className="flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-all shadow-sm"
         >
           <Plus size={18} />
@@ -295,10 +298,13 @@ export default function ProductPage() {
                               <Eye size={14} className="text-slate-400" />
                               View
                             </button>
-                            <button className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors">
-                              <Edit2 size={14} className="text-slate-400" />
-                              Edit
-                            </button>
+                              <button 
+                                onClick={() => router.push(`/admin2/products/edit/${item._id}`)} 
+                                className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                              >
+                                <Edit2 size={14} className="text-slate-400" />
+                                Edit
+                              </button>
                             <div className="h-px bg-slate-100 my-1 mx-2" />
                             <button
                               onClick={() =>

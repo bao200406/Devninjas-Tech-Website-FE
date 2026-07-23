@@ -1,106 +1,63 @@
-import { Search, User, Heart, Bell, ShoppingCart, Moon, Menu } from "lucide-react";
+import { Search, User, Heart, Bell, ShoppingCart, Moon, Menu, LayoutGrid } from "lucide-react";
 import UserSection from "@/components/ui/UserSection";
 import Link from 'next/link';
 import Logo from "./logo/Logo";
+
 export default function Header() {
   const menuItems = ["ĐIỆN THOẠI", "LAPTOP", "PHỤ KIỆN", "AUDIO", "GAMING", "ĐỒNG HỒ"];
 
   return (
-    <header className="bg-white border-b border-gray-100">
-      {/* Tầng trên: Logo, Tìm kiếm, Icons */}
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
+    <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
+      <div className="container mx-auto px-4 flex items-center justify-between gap-4">
         {/* Logo */}
-<Logo />
+        <Logo />
 
-        {/* Search Bar - Ẩn trên Mobile, hiện trên Tablet/Desktop */}
-        <div className="hidden md:flex flex-1 max-w-2xl mx-4">
-          <div className="relative w-full">
+        {/* Search Bar + Danh mục */}
+        <div className="hidden md:flex flex-1 max-w-2xl mx-4 gap-2">
+          {/* Nút Danh mục (Dropdown) */}
+          <div className="relative group">
+            <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-blue-800 transition whitespace-nowrap">
+              <LayoutGrid size={18} />
+              Danh mục
+            </button>
+            
+            {/* Dropdown Menu */}
+            <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              {menuItems.map((item) => (
+                <Link key={item} href={`/${item.toLowerCase()}`} className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 first:rounded-t-xl last:rounded-b-xl">
+                  {item}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
             <input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
-              className="w-full bg-gray-100 rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none"
+              className="w-full bg-gray-100 rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
         </div>
 
         {/* Icons */}
-       <div className="flex items-center gap-2 md:gap-4 text-gray-600">
-  {/* Icon Container cho các nút bấm */}
-  {[
-    { icon: Heart, label: "Wishlist", hidden: "hidden sm:block" },
-    { icon: Bell, label: "Notifications", badge: "3", color: "bg-red-500" },
-    { icon: ShoppingCart, label: "Cart", badge: "2", color: "bg-blue-600", href: "/cart" },
-    { icon: Moon, label: "Theme", hidden: "hidden sm:block" },
-  ].map((item, index) => {
-    const content = (
-      <button
-        key={index}
-        className={`relative p-2.5 rounded-full hover:bg-gray-100 hover:text-blue-600 transition-all duration-200 ${item.hidden || ""}`}
-        aria-label={item.label}
-      >
-        <item.icon size={22} strokeWidth={1.8} />
-        {item.badge && (
-          <span
-            className={`absolute top-1 right-1 ${item.color} text-[10px] text-white w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm`}
-          >
-            {item.badge}
-          </span>
-        )}
-      </button>
-    );
-
-    return item.href ? (
-      <Link key={index} href={item.href}>
-        {content}
-      </Link>
-    ) : (
-      content
-    );
-  })}
-
-  {/* Mobile Menu */}
-  <button className="md:hidden p-2.5 hover:bg-gray-100 rounded-full">
-    <Menu size={24} />
-  </button>
-
-  {/* User Section (giữ nguyên vị trí cuối) */}
-  <div className="ml-2">
-    <UserSection />
-  </div>
-</div>
-      </div>
-
-      {/* Đường kẻ ngăn cách tinh tế giữa Header và Menu */}
-      <div className="w-full border-b border-gray-100"></div>
-
-
-      {/* Tầng dưới: Menu điều hướng & Buttons - Ẩn hoàn toàn trên Mobile */}
-      <div className="hidden md:flex container mx-auto px-4 items-center justify-between h-14">
-        <nav className="flex items-center h-full gap-8">
-          {menuItems.map((item, index) => (
-            <a
-              key={item}
-              href="#"
-              className={`text-sm font-bold uppercase tracking-wide transition-all border-b-2 h-full flex items-center ${
-                index === 0 
-                  ? "text-blue-700 border-blue-700" 
-                  : "text-gray-600 border-transparent hover:text-blue-700 hover:border-blue-700"
-              }`}
-            >
-              {item}
-            </a>
+        <div className="flex items-center gap-2 text-gray-600">
+          {[
+            { icon: Heart, label: "Wishlist", hidden: "hidden sm:block" },
+            { icon: Bell, label: "Notifications", badge: "3", color: "bg-red-500" },
+            { icon: ShoppingCart, label: "Cart", badge: "2", color: "bg-blue-600", href: "/cart" },
+          ].map((item, index) => (
+            <Link key={index} href={item.href || "#"} className={`relative p-2 rounded-full hover:bg-gray-100 ${item.hidden || ""}`}>
+              <item.icon size={22} />
+              {item.badge && <span className={`absolute top-0 right-0 ${item.color} text-[10px] text-white w-4 h-4 flex items-center justify-center rounded-full font-bold`}>{item.badge}</span>}
+            </Link>
           ))}
-        </nav>
-
-        {/* Nhóm CTA Buttons */}
-        <div className="flex items-center gap-3">
-          <button className="text-blue-800 text-[11px] font-bold px-4 py-1.5 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors whitespace-nowrap">
-            TRẢ GÓP 0%
-          </button>
-          <button className="bg-blue-900 text-white text-[11px] font-bold px-4 py-1.5 rounded-md hover:bg-blue-800 transition-colors whitespace-nowrap">
-            THU CŨ ĐỔI MỚI
-          </button>
+          
+          <div className="ml-2">
+            <UserSection />
+          </div>
         </div>
       </div>
     </header>

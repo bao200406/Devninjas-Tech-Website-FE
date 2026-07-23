@@ -24,6 +24,11 @@ export const cancelOrder = async (orderId, data) => {
   return response.data;
 };
 
+export const updateOrder = async (orderId, data) => {
+  const response = await api.patch(`/orders/update-info/${orderId}`, data);
+  return response.data;
+};
+
 /* =======================
    ADMIN SERVICES
 ======================= */

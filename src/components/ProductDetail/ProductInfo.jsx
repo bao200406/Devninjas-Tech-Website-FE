@@ -5,6 +5,14 @@ import { useAuth } from "../../context/AuthContext";
 
 
 export default function ProductInfo({ product, variants, onVariantChange }) {
+  // --- ĐẶT DEBUG Ở ĐÂY ---
+  console.log("DEBUG [ProductInfo nhận props]:", {
+    product,
+    variants,
+    isArray: Array.isArray(variants), // Phải in ra true thì mới đúng là mảng
+    length: variants?.length
+  });
+  
   const { user } = useAuth();
   const variantList = variants?.data || [];
 
@@ -34,26 +42,34 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  // 1. Tự động thiết lập giá trị mặc định khi variantList đã load xong
+  // 1. Tự động chọn biến thể mặc định (hoặc phần tử đầu tiên)
   useEffect(() => {
-    if (variantList.length > 0 && !selectedColor && !selectedStorage) {
+    if (variantList.length > 0 && !selectedVariant) {
       const defaultVariant = variantList.find(v => v.isDefault) || variantList[0];
-      
-      const colorAttr = defaultVariant.attributes.find(a => a.attributeValueId.attributeId.name === "Màu sắc");
-      const storageAttr = defaultVariant.attributes.find(a => a.attributeValueId.attributeId.name === "Dung lượng");
+      setSelectedVariant(defaultVariant);
+      onVariantChange?.(defaultVariant);
+
+      // Gán giá trị màu/dung lượng nếu có tồn tại trong attributes của variant đó
+      const colorAttr = defaultVariant.attributes?.find(a => a.attributeValueId?.attributeId?.name === "Màu sắc");
+      const storageAttr = defaultVariant.attributes?.find(a => a.attributeValueId?.attributeId?.name === "Dung lượng");
       
       if (colorAttr) setSelectedColor(colorAttr.attributeValueId.value);
       if (storageAttr) setSelectedStorage(storageAttr.attributeValueId.value);
     }
   }, [variantList]);
 
-  // 2. Logic tìm biến thể dựa trên lựa chọn hiện tại
+  // 2. Logic tìm biến thể dựa trên lựa chọn Màu sắc hoặc Dung lượng
   useEffect(() => {
-    if (variantList.length === 0 || !selectedColor || !selectedStorage) return;
+    if (variantList.length === 0) return;
 
     const found = variantList.find((v) => {
-      const vals = v.attributes.map((a) => a.attributeValueId.value);
-      return vals.includes(selectedColor) && vals.includes(selectedStorage);
+      const vals = v.attributes.map((a) => a.attributeValueId?.value);
+      
+      // Khớp theo những gì người dùng đang chọn
+      const matchColor = selectedColor ? vals.includes(selectedColor) : true;
+      const matchStorage = selectedStorage ? vals.includes(selectedStorage) : true;
+
+      return matchColor && matchStorage;
     });
 
     if (found) {
