@@ -322,18 +322,140 @@ const handleUpdateVariant = async (oldVariantId, newVariant) => {
           
           <div className="my-6 border-t border-[#e5e5e5]"></div>
 
-          {/* Mã giảm giá */}
-          <div className="mb-6">
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                placeholder="Nhập mã ưu đãi..." 
-                className="flex-1 border border-[#d8dde6] rounded-[8px] px-4 py-2 text-[14px] outline-none focus:border-[#0071e3]"
-              />
-              <button className="px-4 py-2 bg-[#48535b] text-white text-[14px] font-medium rounded-[8px] hover:bg-[#333]">
-                Áp dụng
-              </button>
+          {/* Voucher & Khuyến mãi */}
+          <div className="mb-6 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
+
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#eef0f3] bg-[#f8fbff] px-5 py-4">
+              <div>
+                <h3 className="text-[17px] font-bold text-[#1d1d1f]">
+                  🎟️ Khuyến mãi & Voucher
+                </h3>
+                <p className="text-[13px] text-[#6e6e73]">
+                  Áp dụng ưu đãi tốt nhất cho đơn hàng của bạn
+                </p>
+              </div>
+
+              <span className="rounded-full bg-[#0071e3]/10 px-3 py-1 text-[12px] font-semibold text-[#0071e3]">
+                HOT
+              </span>
             </div>
+
+            {/* Khuyến mãi */}
+            <div className="space-y-3 px-5 py-4">
+
+              <div className="flex items-start gap-3 rounded-xl bg-[#f9fafb] p-3">
+                <span className="text-green-600 text-lg">✓</span>
+
+                <div>
+                  <p className="font-semibold text-[14px]">
+                    Miễn phí vận chuyển
+                  </p>
+
+                  <p className="text-[12px] text-[#6e6e73]">
+                    Áp dụng cho tất cả đơn hàng.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl bg-[#f9fafb] p-3">
+                <span className="text-green-600 text-lg">✓</span>
+
+                <div>
+                  <p className="font-semibold text-[14px]">
+                    Giảm 5% khi thanh toán Online
+                  </p>
+
+                  <p className="text-[12px] text-[#6e6e73]">
+                    Thanh toán bằng VNPay hoặc MoMo.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Nhập voucher */}
+            <div className="border-t border-[#eef0f3] px-5 py-4">
+
+              <p className="mb-3 text-[14px] font-semibold">
+                Nhập mã giảm giá
+              </p>
+
+              <div className="flex gap-3">
+
+                <input
+                  type="text"
+                  placeholder="Nhập mã voucher..."
+                  className="flex-1 rounded-xl border border-[#d8dde6] px-4 py-3 outline-none transition focus:border-[#0071e3]"
+                />
+
+                <button
+                  className="rounded-xl bg-[#0071e3] px-6 text-white font-semibold hover:bg-[#005bb5] transition"
+                >
+                  Áp dụng
+                </button>
+
+              </div>
+
+            </div>
+
+            {/* Voucher nổi bật */}
+            <div className="border-t border-[#eef0f3] px-5 py-4">
+
+              <p className="mb-3 text-[14px] font-semibold">
+                Voucher nổi bật
+              </p>
+
+              <div className="space-y-3">
+
+                <div className="flex items-center justify-between rounded-xl border border-dashed border-[#0071e3] bg-[#f8fbff] p-4">
+
+                  <div>
+
+                    <p className="font-bold text-[#0071e3]">
+                      DEVNINJAS10
+                    </p>
+
+                    <p className="text-[13px] text-[#6e6e73]">
+                      Giảm 10% tối đa 100.000đ
+                    </p>
+
+                  </div>
+
+                  <button
+                    className="rounded-lg border border-[#0071e3] px-4 py-2 text-sm font-semibold text-[#0071e3] hover:bg-[#0071e3] hover:text-white transition"
+                  >
+                    Dùng ngay
+                  </button>
+
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl border border-dashed border-[#16a34a] bg-[#f6fff8] p-4">
+
+                  <div>
+
+                    <p className="font-bold text-[#16a34a]">
+                      FREESHIP
+                    </p>
+
+                    <p className="text-[13px] text-[#6e6e73]">
+                      Miễn phí vận chuyển toàn quốc
+                    </p>
+
+                  </div>
+
+                  <button
+                    className="rounded-lg border border-[#16a34a] px-4 py-2 text-sm font-semibold text-[#16a34a] hover:bg-[#16a34a] hover:text-white transition"
+                  >
+                    Dùng ngay
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
 
           {/* Tổng cộng */}
