@@ -1,7 +1,10 @@
 import { useState } from "react";
 import ProductReviews from "./ProductReviews"; // Import component con vào
+import ProductSpecifications from "./ProductSpecifications"; // Import component thông số kỹ thuật
 
-export default function ProductTabs({ productId }) {
+export default function ProductTabs({ product }) {
+  // Thay vì chỉ nhận productId, nhận nguyên object product để lấy specifications và description
+  const productId = product?._id;
   const [activeTab, setActiveTab] = useState("reviews");
 
   return (
@@ -30,9 +33,24 @@ export default function ProductTabs({ productId }) {
 
       {/* Nội dung tab */}
       <div className="mt-6 w-full">
-        {activeTab === "description" && <div className="p-6 bg-white rounded-2xl border">Mô tả sản phẩm...</div>}
-        {activeTab === "specifications" && <div className="p-6 bg-white rounded-2xl border">Thông số kỹ thuật...</div>}
-        {activeTab === "policy" && <div className="p-6 bg-white rounded-2xl border">Chính sách...</div>}
+        {activeTab === "description" && (
+          <div className="p-6 bg-white rounded-2xl border text-slate-700 leading-relaxed">
+            {product?.description || "Mô tả sản phẩm..."}
+          </div>
+        )}
+
+        {/* Đã thay thế phần thông số kỹ thuật cũ bằng component chuẩn UI đẹp mắt */}
+        {activeTab === "specifications" && (
+          <ProductSpecifications specifications={product?.specifications} />
+        )}
+
+        {activeTab === "policy" && (
+          <div className="p-6 bg-white rounded-2xl border text-slate-700 space-y-2">
+            <p className="font-bold">Chính sách bảo hành:</p>
+            <p>1 đổi 1 trong vòng 30 ngày nếu có lỗi từ nhà sản xuất.</p>
+            <p>Bảo hành chính hãng 12 tháng tại trung tâm ủy quyền.</p>
+          </div>
+        )}
         
         {/* Gọi component con ra đây và truyền productId */}
         {activeTab === "reviews" && <ProductReviews productId={productId} />}

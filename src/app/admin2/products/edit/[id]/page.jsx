@@ -51,6 +51,7 @@ export default function EditProductPage() {
   });
 
   // Load dữ liệu ban đầu
+// Load dữ liệu ban đầu
   useEffect(() => {
     const initData = async () => {
       try {
@@ -58,13 +59,40 @@ export default function EditProductPage() {
           getAllCategories(),
           getAllBrands(),
           getAllAttributes(),
-          getProductById(id) // Bạn cần tạo hàm này trong productService
+          getProductById(id)
         ]);
         
+        console.log("CHI TIẾT PRODUCT:", product);
+        console.log("MẢNG VARIANTS:", product?.variants);
+
         setCategories(cats);
         setBrands(brds);
         setAttributeList(attrs.data || []);
         
+        // --- CHUẨN HÓA LẠI VARIANTS ĐỂ MAP ĐÚNG VÀO SELECT BOX ---
+        const formattedVariants = (product.variants || []).map(variant => ({
+          ...variant,
+          attributes: (variant.attributes || []).map(attrObj => {
+            let valId = attrObj.attributeValueId?._id || attrObj.attributeValueId || "";
+            let attrId = attrObj.attributeId?._id || attrObj.attributeId || "";
+
+            // Nếu thiếu attributeId nhưng có attributeValueId, tự động tìm xem nó thuộc tính nào trong attributeList
+            if (!attrId && valId && attrs?.data) {
+              const matchedAttr = attrs.data.find(parentAttr => 
+                parentAttr.values?.some(v => String(v._id) === String(valId))
+              );
+              if (matchedAttr) {
+                attrId = matchedAttr._id;
+              }
+            }
+
+            return {
+              attributeId: String(attrId),
+              attributeValueId: String(valId)
+            };
+          })
+        }));
+
         // Map dữ liệu từ API vào form
         setFormData({
           name: product.name,
@@ -75,7 +103,7 @@ export default function EditProductPage() {
           image: product.image ? `${IMAGE_BASE_URL}/${product.image}` : null,
           status: product.status,
           isFeatured: product.isFeatured,
-          variants: product.variants || []
+          variants: formattedVariants 
         });
       } catch (err) {
         toast.error("Không thể tải dữ liệu sản phẩm");
@@ -84,7 +112,7 @@ export default function EditProductPage() {
     initData();
   }, [id]);
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return toast.error("Tên sản phẩm không được để trống");
     if (!formData.categoryId) return toast.error("Vui lòng chọn danh mục");
@@ -117,44 +145,43 @@ export default function EditProductPage() {
 
         await updateProduct(id, dataToSend);
 
-        // 2. CẬP NHẬT BIẾN THỂ
-        const variantsData = new FormData();
-        // SỬA: Đảm bảo productId là một field độc lập và rõ ràng
-        variantsData.append("productId", id);
-
-        formData.variants.forEach((v, index) => {
-            if (v._id) variantsData.append(`variants[${index}][_id]`, v._id);
-            variantsData.append(`variants[${index}][sku]`, v.sku);
-            variantsData.append(`variants[${index}][price]`, v.price);
-            variantsData.append(`variants[${index}][stock]`, v.stock);
-            variantsData.append(`variants[${index}][isDefault]`, v.isDefault);
+        // 2. CẬP NHẬT BIẾN THỂ (Dùng vòng lặp gửi từng biến thể đúng theo thiết kế Controller của bạn)
+        for (let index = 0; index < formData.variants.length; index++) {
+            const v = formData.variants[index];
+            const variantsData = new FormData();
+            
+            variantsData.append("productId", id);
+            variantsData.append("sku", v.sku || "");
+            variantsData.append("price", v.price || 0);
+            variantsData.append("stock", v.stock || 0);
+            variantsData.append("isDefault", v.isDefault ? "true" : "false");
             
             if (v.image instanceof File) {
                 variantsData.append("variantImages", v.image);
-                variantsData.append(`variants[${index}][imageIndex]`, index);
-            } else if (typeof v.image === 'string') {
-                variantsData.append(`variants[${index}][existingImage]`, v.image);
+                variantsData.append("imageIndex", 0);
+            } else if (typeof v.image === 'string' && v.image) {
+                variantsData.append("existingImage", v.image);
             }
 
-            v.attributes.forEach((attr, attrIdx) => {
-                variantsData.append(`variants[${index}][attributes][${attrIdx}][attributeId]`, attr.attributeId);
-                variantsData.append(`variants[${index}][attributes][${attrIdx}][attributeValueId]`, attr.attributeValueId);
-            });
-        });
+            const formattedAttributes = (v.attributes || []).map(attr => ({
+                attributeId: attr.attributeId,
+                attributeValueId: attr.attributeValueId
+            }));
+            variantsData.append("attributeValueIds", JSON.stringify(formattedAttributes));
 
-        // --- BẮT ĐẦU DEBUG FORMDATA ---
-        console.log("--- BẮT ĐẦU DEBUG FORMDATA ---");
-        for (let [key, value] of variantsData.entries()) {
-            console.log(`Key: ${key} | Value:`, value);
+            // --- BẮT ĐẦU DEBUG FORMDATA CHO TỪNG BIẾN THỂ ---
+            console.log(`--- BẮT ĐẦU DEBUG FORMDATA BIẾN THỂ ${index + 1} ---`);
+            for (let [key, value] of variantsData.entries()) {
+                console.log(`Key: ${key} | Value:`, value);
+            }
+            console.log(`--- KẾT THÚC DEBUG FORMDATA BIẾN THỂ ${index + 1} ---`);
+
+            // Xác định ID của biến thể: có _id thì update, không có thì dùng "new" để create
+            const variantIdToCall = v._id ? v._id : "new";
+
+            // Gọi API cập nhật/tạo mới cho từng biến thể
+            await updateVariants(variantIdToCall, variantsData);
         }
-        console.log("--- KẾT THÚC DEBUG FORMDATA ---");
-
-        const variantIdToCall = formData.variants.length > 0 
-            ? (formData.variants[0]._id || "new") 
-            : id;
-
-        // Gọi API với đúng ID của biến thể
-        await updateVariants(variantIdToCall, variantsData);
 
         toast.dismiss(toastId);
         toast.success("Cập nhật sản phẩm thành công!");
@@ -165,7 +192,7 @@ export default function EditProductPage() {
     } finally {
         setIsSubmitting(false);
     }
-};
+  };
 
   // UI Code: Sao chép y hệt phần return từ NewProductPage của bạn vào đây.
   // Đảm bảo các hàm map(), onChange() trỏ đúng vào state formData mới này.
@@ -189,7 +216,7 @@ export default function EditProductPage() {
         <div className="flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-              Create Product
+              Update Product
             </h1>
             <p className="text-slate-500 mt-1 font-medium">
               Thiết lập thông tin và quản lý kho hàng sản phẩm.
@@ -496,24 +523,33 @@ export default function EditProductPage() {
                   </div>
   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    {attributeList?.map((attr) => (
+                    {attributeList?.map((attr) => {
+                    // --- THÊM LOG Ở ĐÂY ĐỂ DEBUG ---
+                    const foundAttr = variant.attributes.find(a => String(a.attributeId) === String(attr._id));
+                    console.log(`[DEBUG] Biến thể ${index} | Thuộc tính ${attr.name}:`, {
+                      attrId_fromList: attr._id,
+                      variantAttributes: variant.attributes,
+                      foundAttr: foundAttr,
+                      valueSelected: foundAttr?.attributeValueId
+                    });
+
+                    return (
                       <div key={attr._id} className="space-y-1">
                         <label className="text-xs font-bold text-slate-500">{attr.name}</label>
                         <select
                           className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none"
-                          value={variant.attributes.find(a => a.attributeId === attr._id)?.attributeValueId || ""}
+                          value={foundAttr?.attributeValueId || ""}
                           onChange={(e) => {
                             const selectedValueId = e.target.value;
                             const newVariants = [...formData.variants];
                             
-                            // Tìm thuộc tính hiện tại trong mảng attributes của biến thể
-                            const attrIndex = newVariants[index].attributes.findIndex(a => a.attributeId === attr._id);
+                            const attrIndex = newVariants[index].attributes.findIndex(a => String(a.attributeId) === String(attr._id));
                             
                             if (attrIndex > -1) {
                               newVariants[index].attributes[attrIndex].attributeValueId = selectedValueId;
                             } else {
                               newVariants[index].attributes.push({ 
-                                attributeId: attr._id, 
+                                attributeId: String(attr._id), 
                                 attributeValueId: selectedValueId 
                               });
                             }
@@ -526,7 +562,8 @@ export default function EditProductPage() {
                           ))}
                         </select>
                       </div>
-                    ))}
+                    );
+                  })}
                   </div>
   
                   {/* <--- BỔ SUNG VÀO ĐÂY */}

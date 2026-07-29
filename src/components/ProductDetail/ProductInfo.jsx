@@ -1,98 +1,118 @@
-import { useState, useEffect, useMemo  } from "react";
-import { Star, Heart, ArrowLeftRight, Truck, ShieldCheck, RefreshCw } from "lucide-react";
-import * as cartService from "../../services/cartService"; // Đường dẫn đến file service của bạn
+import { useState, useEffect, useMemo } from "react";
+import { Star, Heart, ArrowLeftRight, Truck, ShieldCheck, RefreshCw, ChevronDown, ChevronUp, Sliders } from "lucide-react";
+import * as cartService from "../../services/cartService"; 
 import { useAuth } from "../../context/AuthContext";
 
-
 export default function ProductInfo({ product, variants, onVariantChange }) {
-  // --- ĐẶT DEBUG Ở ĐÂY ---
-  console.log("DEBUG [ProductInfo nhận props]:", {
-    product,
-    variants,
-    isArray: Array.isArray(variants), // Phải in ra true thì mới đúng là mảng
-    length: variants?.length
-  });
-  
   const { user } = useAuth();
   const variantList = variants?.data || [];
 
-  const colors = useMemo(() => {
-    const colorMap = new Map();
-    variantList.flatMap((v) => v.attributes || [])
-      .filter((a) => a.attributeValueId?.attributeId?.name === "Màu sắc")
-      .forEach((a) => {
-        const attrValue = a.attributeValueId;
-        if (!colorMap.has(attrValue.value)) {
-          colorMap.set(attrValue.value, { name: attrValue.value });
+  // 1. Tự động gom nhóm tất cả các thuộc tính có trong variant
+  const attributeGroups = useMemo(() => {
+    const groups = new Map();
+
+    variantList.forEach((v) => {
+      (v.attributes || []).forEach((a) => {
+        const attrDoc = a.attributeValueId?.attributeId;
+        const attrVal = a.attributeValueId;
+
+        if (attrDoc && attrVal) {
+          const attrName = attrDoc.name;
+          if (!groups.has(attrName)) {
+            groups.set(attrName, new Set());
+          }
+          groups.get(attrName).add(attrVal.value);
         }
       });
-    return Array.from(colorMap.values());
+    });
+
+    const result = {};
+    groups.forEach((valuesSet, key) => {
+      result[key] = Array.from(valuesSet);
+    });
+    return result; 
   }, [variantList]);
 
-  const storages = useMemo(() => {
-    return Array.from(new Set(
-      variantList.flatMap((v) => v.attributes || [])
-        .filter((a) => a.attributeValueId?.attributeId?.name === "Dung lượng")
-        .map((a) => a.attributeValueId.value)
-    ));
-  }, [variantList]);
+  // Phân loại thuộc tính: "Màu sắc" để riêng bên ngoài, các thuộc tính còn lại gom nhóm
+  const colorAttributeKey = Object.keys(attributeGroups).find(
+    (key) => key.toLowerCase().includes("màu") || key.toLowerCase().includes("color")
+  );
 
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedStorage, setSelectedStorage] = useState(null);
+  const otherAttributeGroups = useMemo(() => {
+    const others = {};
+    Object.entries(attributeGroups).forEach(([key, values]) => {
+      if (key !== colorAttributeKey) {
+        others[key] = values;
+      }
+    });
+    return others;
+  }, [attributeGroups, colorAttributeKey]);
+
+  // Điều kiện kiểm tra tổng số lượng nhóm thuộc tính (>= 3 thì gom nhóm cấu hình)
+  const totalAttributeCount = Object.keys(attributeGroups).length;
+  const shouldCollapseOthers = totalAttributeCount >= 3;
+
+  const [selectedAttributes, setSelectedAttributes] = useState({});
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [isConfigOpen, setIsConfigOpen] = useState(false); // Trạng thái mở/đóng khung cấu hình
 
-  // 1. Tự động chọn biến thể mặc định (hoặc phần tử đầu tiên)
+  // Tự động chọn biến thể mặc định khi load
   useEffect(() => {
     if (variantList.length > 0 && !selectedVariant) {
       const defaultVariant = variantList.find(v => v.isDefault) || variantList[0];
       setSelectedVariant(defaultVariant);
       onVariantChange?.(defaultVariant);
 
-      // Gán giá trị màu/dung lượng nếu có tồn tại trong attributes của variant đó
-      const colorAttr = defaultVariant.attributes?.find(a => a.attributeValueId?.attributeId?.name === "Màu sắc");
-      const storageAttr = defaultVariant.attributes?.find(a => a.attributeValueId?.attributeId?.name === "Dung lượng");
-      
-      if (colorAttr) setSelectedColor(colorAttr.attributeValueId.value);
-      if (storageAttr) setSelectedStorage(storageAttr.attributeValueId.value);
+      const initialSelection = {};
+      (defaultVariant.attributes || []).forEach(a => {
+        const attrName = a.attributeValueId?.attributeId?.name;
+        const attrVal = a.attributeValueId?.value;
+        if (attrName && attrVal) {
+          initialSelection[attrName] = attrVal;
+        }
+      });
+      setSelectedAttributes(initialSelection);
     }
   }, [variantList]);
 
-  // 2. Logic tìm biến thể dựa trên lựa chọn Màu sắc hoặc Dung lượng
+  // Logic tìm biến thể dựa trên lựa chọn
   useEffect(() => {
-    if (variantList.length === 0) return;
+    if (variantList.length === 0 || Object.keys(selectedAttributes).length === 0) return;
 
     const found = variantList.find((v) => {
-      const vals = v.attributes.map((a) => a.attributeValueId?.value);
-      
-      // Khớp theo những gì người dùng đang chọn
-      const matchColor = selectedColor ? vals.includes(selectedColor) : true;
-      const matchStorage = selectedStorage ? vals.includes(selectedStorage) : true;
-
-      return matchColor && matchStorage;
+      return Object.entries(selectedAttributes).every(([attrName, selectedVal]) => {
+        return v.attributes.some(
+          (a) => a.attributeValueId?.attributeId?.name === attrName && 
+                 a.attributeValueId?.value === selectedVal
+        );
+      });
     });
 
     if (found) {
       setSelectedVariant(found);
       onVariantChange?.(found);
     }
-  }, [selectedColor, selectedStorage, variantList, onVariantChange]);
+  }, [selectedAttributes, variantList, onVariantChange]);
 
-  // Loading state
+  const handleAttributeSelect = (attrName, value) => {
+    setSelectedAttributes(prev => ({
+      ...prev,
+      [attrName]: value
+    }));
+  };
+
   if (!product) return <div>Đang tải thông tin sản phẩm...</div>;
   if (!selectedVariant) return <div>Đang tải cấu hình...</div>;
 
   const handleAddToCart = async () => {
-    // 1. Tính toán logic kiểm tra hàng (giống Backend)
     const isAvailable = selectedVariant && selectedVariant.stock > 0 && selectedVariant.isActive !== false;
     
-    // 2. Chặn nếu sản phẩm hết hàng hoặc không khả dụng
     if (!isAvailable) {
       alert("Sản phẩm này hiện đã hết hàng hoặc không khả dụng!");
       return;
     }
 
-    // 3. Chuẩn bị dữ liệu hiển thị (tương tự như Backend trả về)
     const variantAttributes = selectedVariant.attributes
       .map((a) => a.attributeValueId.value)
       .join(" / ");
@@ -108,7 +128,6 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
       const cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
       const idx = cart.findIndex((item) => item.variantId === selectedVariant._id);
 
-      // Kiểm tra số lượng tồn kho trước khi thêm vào localStorage
       const currentQtyInCart = idx > -1 ? cart[idx].quantity : 0;
       if (currentQtyInCart + quantity > selectedVariant.stock) {
         alert(`Số lượng yêu cầu vượt quá tồn kho (Còn: ${selectedVariant.stock})`);
@@ -120,14 +139,14 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
       } else {
         cart.push({
           variantId: selectedVariant._id,
-          productId: product._id, // <--- THÊM DÒNG NÀY ĐỂ ĐỒNG BỘ
+          productId: product._id,
           quantity,
           name: product.name,
           price: selectedVariant.price,
           image: selectedVariant.image,
           variantName: variantAttributes,
-          stock: selectedVariant.stock, // Lưu stock mới nhất vào localStorage
-          isAvailable: true, // Gắn flag để Frontend dùng hiển thị
+          stock: selectedVariant.stock,
+          isAvailable: true,
           compareAtPrice: selectedVariant.compareAtPrice || null
         });
       }
@@ -168,46 +187,106 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
         )}
       </div>
 
-      {/* Màu sắc */}
-      {/* Màu sắc - Hiển thị dạng Tag với giá trị value */}
+      {/* 1. HIỂN THỊ THUỘC TÍNH MÀU SẮC Ở BÊN NGOÀI (NẾU CÓ) */}
+      {colorAttributeKey && attributeGroups[colorAttributeKey] && (
         <div>
-          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Màu sắc</h3>
+          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">{colorAttributeKey}</h3>
           <div className="flex flex-wrap items-center gap-2">
-            {colors.map((c) => (
-              <button
-                key={c.name}
-                onClick={() => setSelectedColor(c.name)}
-                className={`px-4 py-2 text-xs font-medium rounded-lg border transition-all ${
-                  selectedColor === c.name 
-                    ? "bg-[#005ba4] text-white border-[#005ba4]" // Trạng thái đang chọn (Active)
-                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50" // Trạng thái bình thường
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
+            {attributeGroups[colorAttributeKey].map((val) => {
+              const isSelected = selectedAttributes[colorAttributeKey] === val;
+              return (
+                <button
+                  key={val}
+                  onClick={() => handleAttributeSelect(colorAttributeKey, val)}
+                  className={`px-4 py-2 text-xs font-medium rounded-lg border transition-all ${
+                    isSelected 
+                      ? "bg-[#005ba4] text-white border-[#005ba4]" 
+                      : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                  }`}
+                >
+                  {val}
+                </button>
+              );
+            })}
           </div>
         </div>
+      )}
 
-      {/* Dung lượng */}
-      <div>
-        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Dung lượng</h3>
-        <div className="flex items-center gap-2">
-          {storages.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSelectedStorage(s)}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md border transition-all ${
-                selectedStorage === s 
-                  ? "bg-[#005ba4] text-white border-[#005ba4]" 
-                  : "bg-[#f1f3f5] text-gray-700 border-transparent hover:border-gray-300"
-              }`}
-            >
-              {s}
+      {/* 2. LOGIC HIỂN THỊ CÁC THUỘC TÍNH CÒN LẠI */}
+      {shouldCollapseOthers ? (
+        /* GIAO DIỆN GOM NHÓM (DÀNH CHO >= 3 THUỘC TÍNH NHƯ LAPTOP) */
+        <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-4">
+          <div 
+            onClick={() => setIsConfigOpen(!isConfigOpen)}
+            className="flex items-center justify-between cursor-pointer select-none"
+          >
+            <div className="flex items-center gap-2">
+              <Sliders size={16} className="text-[#005ba4]" />
+              <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                Lựa chọn cấu hình tùy chỉnh
+              </span>
+            </div>
+            <button type="button" className="text-xs font-bold text-[#005ba4] flex items-center gap-1">
+              {isConfigOpen ? "Thu gọn" : "Xem tất cả"} 
+              {isConfigOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
-          ))}
+          </div>
+
+          {/* Nội dung thu gọn / mở rộng */}
+          {isConfigOpen && (
+            <div className="space-y-4 pt-3 border-t border-gray-200 animate-in fade-in duration-200">
+              {Object.entries(otherAttributeGroups).map(([attrName, values]) => (
+                <div key={attrName}>
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">{attrName}</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {values.map((val) => {
+                      const isSelected = selectedAttributes[attrName] === val;
+                      return (
+                        <button
+                          key={val}
+                          onClick={() => handleAttributeSelect(attrName, val)}
+                          className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${
+                            isSelected 
+                              ? "bg-[#005ba4] text-white border-[#005ba4]" 
+                              : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                          }`}
+                        >
+                          {val}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        /* GIAO DIỆN BÌNH THƯỜNG (DÀNH CHO < 3 THUỘC TÍNH NHƯ ĐIỆN THOẠI) */
+        Object.entries(otherAttributeGroups).map(([attrName, values]) => (
+          <div key={attrName}>
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">{attrName}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              {values.map((val) => {
+                const isSelected = selectedAttributes[attrName] === val;
+                return (
+                  <button
+                    key={val}
+                    onClick={() => handleAttributeSelect(attrName, val)}
+                    className={`px-4 py-2 text-xs font-medium rounded-lg border transition-all ${
+                      isSelected 
+                        ? "bg-[#005ba4] text-white border-[#005ba4]" 
+                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                    }`}
+                  >
+                    {val}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
 
       {/* Bộ đếm số lượng */}
       <div className="flex items-center gap-3">

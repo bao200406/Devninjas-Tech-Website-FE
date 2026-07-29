@@ -1,6 +1,6 @@
 "use client";
-import { useEffect } from "react"; // 1. Import useEffect
-import AOS from "aos"; // 2. Import AOS
+import { useEffect } from "react"; 
+import AOS from "aos"; 
 import { useQuery } from "@tanstack/react-query";
 import { getHomePageData } from "../services/productService";
 import HeroSection from "@/components/home/HeroSection";
@@ -11,10 +11,11 @@ import BlogSection from "@/components/home/BlogSection";
 import FeedbackSection from "@/components/home/FeedbackSection";
 import BrandSection from "@/components/home/BrandSection";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import ChatWidget from "@/components/chatbot/ChatWidget"; // 1. Import ChatWidget vào trang chủ
 
 export default function Home() {
 
-// 1. Sử dụng useQuery để fetch dữ liệu từ API
+  // 1. Sử dụng useQuery để fetch dữ liệu từ API
   const { data, isLoading, error } = useQuery({
     queryKey: ["homeData"],
     queryFn: getHomePageData,
@@ -35,7 +36,7 @@ export default function Home() {
   const { newProducts, featuredProducts, bestSellers } = data;
 
   return (
-    <div className="bg-app-bg min-h-screen">
+    <div className="bg-app-bg min-h-screen relative">
       
       <main className="flex flex-col gap-12 py-8">
         {/* Banner chính */}
@@ -77,8 +78,11 @@ export default function Home() {
         
       </main>
 
-      {/* ĐẶT COMPONENT Ở ĐÂY: Ngay dưới main, nhưng trong thẻ cha */}
+      {/* Cấu hình các Floating Components ở cuối trang */}
       <ThemeToggle />
+      
+      {/* 2. Đặt ChatWidget ở đây để hiển thị nổi ở góc màn hình xuyên suốt trang chủ */}
+      <ChatWidget />
 
     </div>
   );

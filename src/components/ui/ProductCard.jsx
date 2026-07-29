@@ -28,7 +28,7 @@ export default function ProductCard({
       <div className="bg-white p-4 rounded-xl border border-gray-100 hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
         
         {/* Hình ảnh */}
-        <div className="relative h-40 mb-3 bg-gray-50 rounded-lg overflow-hidden group">
+        <div className="relative h-48 mb-3 bg-gray-50 rounded-lg overflow-hidden group flex items-center justify-center p-2">
           {tag && (
             <span
               className={`absolute top-2 left-2 z-10 ${badgeColor} text-white text-[10px] px-2 py-1 rounded-md font-bold shadow-md`}
@@ -41,7 +41,7 @@ export default function ProductCard({
             <img
               src={getPublicUrl(image)}
               alt={name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

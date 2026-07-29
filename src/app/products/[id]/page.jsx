@@ -77,7 +77,7 @@ export default function ProductDetailPage({ params }) {
         </section>
 
         <section className="w-full border-t border-gray-200/70 pt-8 mt-2">
-          <ProductTabs productId={id}/>
+          <ProductTabs product={product} productId={id}/>
         </section>
 
         <section className="w-full border-t border-gray-200/70 pt-8 mb-6">

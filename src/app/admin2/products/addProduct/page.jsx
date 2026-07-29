@@ -16,6 +16,7 @@ import {
   Settings2,
   Package,
   FileText,
+  Sliders
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -34,8 +35,7 @@ export default function NewProductPage({ onSave }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [attributeList, setAttributeList] = useState([]);
 
- 
- const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     description: "",
     basePrice: "",
@@ -44,8 +44,12 @@ export default function NewProductPage({ onSave }) {
     image: null,
     status: "Active",
     isFeatured: false,
+    specifications: [
+      { key: "", value: "" }
+    ],
+    // --- ĐÃ BỔ SUNG compareAtPrice VÀ isDefault VÀO MỖI VARIANT ---
     variants: [
-      { sku: "", price: "", stock: "", image: null, isDefault: false, attributes: []  }
+      { sku: "", price: "", compareAtPrice: "", stock: "", image: null, isDefault: false, attributes: [] }
     ]
   });
 
@@ -58,14 +62,10 @@ export default function NewProductPage({ onSave }) {
     fetchData();
   }, []);
 
-  // Gọi hàm fetch khi component mount
   useEffect(() => {
     const fetchAttributes = async () => {
       try {
         const response = await getAllAttributes();
-        
-        // Kiểm tra xem response có tồn tại và có trường 'data' hay không
-        // Nếu có, lấy response.data (mảng), nếu không thì gán mảng rỗng
         if (response && Array.isArray(response.data)) {
           setAttributeList(response.data);
         } else {
@@ -73,19 +73,15 @@ export default function NewProductPage({ onSave }) {
         }
       } catch (error) {
         console.error("Lỗi khi tải thuộc tính:", error);
-        setAttributeList([]); // Đảm bảo state luôn là mảng để không lỗi .map()
+        setAttributeList([]);
       }
     };
-      
     fetchAttributes();
   }, []);
-
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation cơ bản
     if (!formData.name.trim()) return toast.error("Tên sản phẩm không được để trống");
     if (!formData.categoryId) return toast.error("Vui lòng chọn danh mục");
     if (!formData.brandId) return toast.error("Vui lòng chọn Thương hiệu");
@@ -97,7 +93,6 @@ export default function NewProductPage({ onSave }) {
     try {
       const dataToSend = new FormData();
       
-      // Tạo slug từ tên
       const generatedSlug = formData.name
         .toLowerCase()
         .trim()
@@ -119,45 +114,47 @@ export default function NewProductPage({ onSave }) {
 
       if (formData.image) dataToSend.append("image", formData.image);
 
+      const validSpecs = formData.specifications.filter(s => s.key.trim() && s.value.trim());
+      if (validSpecs.length > 0) {
+        dataToSend.append("specifications", JSON.stringify(validSpecs));
+      }
+
       const productRes = await createProduct(dataToSend);
 
       if (!productRes) {
         throw new Error("Server không trả về dữ liệu sản phẩm!");
-    }
-      console.log("Phản hồi từ API tạo sản phẩm:", productRes);
-      const productId = productRes?.data?._id || productRes?._id; // Lấy ID sản phẩm vừa tạo
+      }
 
-      // 3. Tạo các biến thể cho sản phẩm đó
-      // Chúng ta sẽ gửi từng biến thể hoặc gửi mảng variants lên
-        const variantsData = new FormData();
-        variantsData.append("productId", productId);
+      const productId = productRes?.data?._id || productRes?._id;
 
-        formData.variants.forEach((v, index) => {
+      const variantsData = new FormData();
+      variantsData.append("productId", productId);
+
+      formData.variants.forEach((v, index) => {
         variantsData.append(`variants[${index}][sku]`, v.sku);
         variantsData.append(`variants[${index}][price]`, v.price);
+        // --- GỬI compareAtPrice LÊN BACKEND ---
+        variantsData.append(`variants[${index}][compareAtPrice]`, v.compareAtPrice);
         variantsData.append(`variants[${index}][stock]`, v.stock);
+        // --- GỬI isDefault LÊN BACKEND ---
         variantsData.append(`variants[${index}][isDefault]`, v.isDefault);
         
-        // Nếu có file ảnh, append vào
         if (v.image instanceof File) {
-          variantsData.append("variantImages", v.image); // Key này phải khớp với backend multer
+          variantsData.append("variantImages", v.image);
           variantsData.append(`variants[${index}][imageIndex]`, index);
         }
 
-        // Append attributes
         v.attributes.forEach((attr, attrIdx) => {
           variantsData.append(`variants[${index}][attributes][${attrIdx}][attributeId]`, attr.attributeId);
           variantsData.append(`variants[${index}][attributes][${attrIdx}][attributeValueId]`, attr.attributeValueId);
         });
       });
 
-      // Gọi API lưu biến thể
       await createVariants(variantsData);
 
       toast.dismiss(toastId);
       toast.success("Sản phẩm đã được tạo thành công!");
       
-      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -167,6 +164,8 @@ export default function NewProductPage({ onSave }) {
         image: null,
         status: "Active",
         isFeatured: false,
+        specifications: [{ key: "", value: "" }],
+        variants: [{ sku: "", price: "", compareAtPrice: "", stock: "", image: null, isDefault: false, attributes: [] }]
       });
     } catch (error) {
       toast.dismiss(toastId);
@@ -176,26 +175,19 @@ export default function NewProductPage({ onSave }) {
     }
   };
 
-const updateVariant = (index, field, value) => {
-  setFormData(prev => {
-    const newVariants = [...prev.variants];
-    
-    // Nếu field là thuộc tính đặc biệt như 'attributes' hoặc 'image' thì xử lý riêng
-    // Nếu là field cơ bản (sku, price, stock):
-    newVariants[index] = {
-      ...newVariants[index],
-      [field]: value
-    };
-    
-    return { ...prev, variants: newVariants };
-  });
-};
-
+  const updateVariant = (index, field, value) => {
+    setFormData(prev => {
+      const newVariants = [...prev.variants];
+      newVariants[index] = {
+        ...newVariants[index],
+        [field]: value
+      };
+      return { ...prev, variants: newVariants };
+    });
+  };
 
   return (
     <div className="space-y-6 max-w-full mx-auto pb-20 px-4 lg:px-8">
-      {/* Breadcrumb */}
-
       <nav className="flex items-center gap-2 text-sm text-slate-400">
         <Link
           href="/admin/products"
@@ -224,11 +216,9 @@ const updateVariant = (index, field, value) => {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 lg:grid-cols-12 gap-8"
       >
-        {/* CỘT TRÁI - CHIẾM 9 CỘT */}
         <div className="lg:col-span-9 w-full space-y-8">
           {/* 1. KHỐI THÔNG TIN CƠ BẢN */}
           <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm space-y-6">
-            {/* Header */}
             <div className="flex items-center gap-2 mb-2">
               <FileText className="text-slate-400" size={20} />
               <h3 className="text-lg font-bold text-slate-800">
@@ -237,7 +227,6 @@ const updateVariant = (index, field, value) => {
             </div>
 
             <div className="space-y-6">
-              {/* Tên sản phẩm */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-slate-600">
@@ -259,19 +248,12 @@ const updateVariant = (index, field, value) => {
                 />
               </div>
 
-              {/*giá sản phẩm */}
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium text-slate-600">
-                    Giá sản phẩm <span className="text-rose-500">*</span>
-                  </label>
-                  {/* <span className="text-xs text-slate-400 font-medium">
-                    {formData.name.length} / 150
-                  </span> */}
-                </div>
+                <label className="text-sm font-medium text-slate-600">
+                  Giá sản phẩm <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
-                  maxLength={150}
                   value={formData.basePrice}
                   onChange={(e) =>
                     setFormData({ ...formData, basePrice: e.target.value })
@@ -281,7 +263,6 @@ const updateVariant = (index, field, value) => {
                 />
               </div>
 
-              {/* Mô tả sản phẩm */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-slate-600">
@@ -303,9 +284,7 @@ const updateVariant = (index, field, value) => {
                 />
               </div>
 
-              {/* Row: Danh mục & Thương hiệu (Cả 2 đều là Select) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Danh mục */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-600">
                     Danh mục <span className="text-rose-500">*</span>
@@ -334,7 +313,6 @@ const updateVariant = (index, field, value) => {
                   </div>
                 </div>
 
-                {/* Thương hiệu (Đã sửa thành Select) */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-600">
                     Thương hiệu
@@ -366,7 +344,68 @@ const updateVariant = (index, field, value) => {
             </div>
           </div>
 
-          {/* 2. KHỐI HÌNH ẢNH SẢN PHẨM (FULL WIDTH) */}
+          {/* THÔNG SỐ KỸ THUẬT */}
+          <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Settings2 className="text-slate-400" size={20} />
+                <h3 className="text-lg font-bold text-slate-800">Thông số kỹ thuật</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({
+                  ...formData,
+                  specifications: [...formData.specifications, { key: "", value: "" }]
+                })}
+                className="text-sm font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg hover:bg-indigo-100 transition-colors"
+              >
+                + Thêm thông số
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {formData.specifications.map((spec, index) => (
+                <div key={index} className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <input
+                    type="text"
+                    placeholder="Tên thông số (VD: Màn hình)"
+                    value={spec.key}
+                    onChange={(e) => {
+                      const newSpecs = [...formData.specifications];
+                      newSpecs[index].key = e.target.value;
+                      setFormData({ ...formData, specifications: newSpecs });
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Giá trị (VD: OLED 6.7 inch)"
+                    value={spec.value}
+                    onChange={(e) => {
+                      const newSpecs = [...formData.specifications];
+                      newSpecs[index].value = e.target.value;
+                      setFormData({ ...formData, specifications: newSpecs });
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium"
+                  />
+                  {formData.specifications.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newSpecs = formData.specifications.filter((_, i) => i !== index);
+                        setFormData({ ...formData, specifications: newSpecs });
+                      }}
+                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* HÌNH ẢNH SẢN PHẨM */}
           <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm space-y-6">
             <div className="flex items-center gap-2 mb-2">
               <ImageIconLucide className="text-slate-400" size={20} />
@@ -376,7 +415,6 @@ const updateVariant = (index, field, value) => {
             </div>
 
             <div className="space-y-4">
-              {/* Khu vực Dropzone / Upload Full Width */}
               <label
                 htmlFor="file-upload"
                 className="group w-full min-h-[200px] border-2 border-dashed border-slate-200 rounded-[20px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition-all"
@@ -406,7 +444,6 @@ const updateVariant = (index, field, value) => {
                 />
               </label>
 
-              {/* Khu vực hiển thị Preview - Hiển thị ngay dưới nút bấm */}
               {formData.image && (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="aspect-square relative rounded-2xl overflow-hidden border border-slate-200 group shadow-md">
@@ -426,7 +463,6 @@ const updateVariant = (index, field, value) => {
                         <X size={18} />
                       </button>
                     </div>
-                    {/* Label định danh ảnh chính */}
                     <div className="absolute bottom-2 left-2 right-2 py-1 bg-white/90 backdrop-blur rounded-lg text-center shadow-sm">
                       <span className="text-[10px] font-black text-slate-900 uppercase">
                         Ảnh chính
@@ -436,9 +472,9 @@ const updateVariant = (index, field, value) => {
                 </div>
               )}
             </div>
-          </div>  
+          </div> 
 
-          {/* 3. KHỐI BIẾN THỂ SẢN PHẨM */}
+          {/* 3. KHỐI BIẾN THỂ SẢN PHẨM (ĐÃ CÓ SKU, PRICE, COMPAREATPRICE, STOCK, ISDEFAULT) */}
           <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -446,7 +482,6 @@ const updateVariant = (index, field, value) => {
                 <h3 className="text-lg font-bold text-slate-800">Biến thể sản phẩm</h3>
               </div>
              <div className="flex items-center gap-3">
-              {/* Nút Thêm Thuộc Tính mới */}
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
@@ -455,15 +490,13 @@ const updateVariant = (index, field, value) => {
                 <Plus size={16} /> Thêm thuộc tính
               </button>
 
-              {/* Nút Thêm Biến thể */}
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sku: "", price: "", stock: "", attributes: [] }] })}
+                onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sku: "", price: "", compareAtPrice: "", stock: "", image: null, isDefault: false, attributes: [] }] })}
                 className="text-sm font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg hover:bg-indigo-100 transition-colors"
               >
                 + Thêm biến thể
               </button>
-              {/* Gọi component Modal */}
               <AddAttributeModal 
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)}
@@ -482,7 +515,8 @@ const updateVariant = (index, field, value) => {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Các trường nhập liệu cho biến thể gồm SKU, Giá bán, Giá so sánh (compareAtPrice), Tồn kho */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <input 
                     placeholder="SKU" 
                     className="px-4 py-3 rounded-xl border border-slate-200"
@@ -490,11 +524,18 @@ const updateVariant = (index, field, value) => {
                     onChange={(e) => updateVariant(index, "sku", e.target.value)}
                   />
                   <input 
-                    placeholder="Giá" 
+                    placeholder="Giá bán" 
                     type="number"
                     className="px-4 py-3 rounded-xl border border-slate-200"
                     value={variant.price}
                     onChange={(e) => updateVariant(index, "price", e.target.value)}
+                  />
+                  <input 
+                    placeholder="Giá gốc (Compare At Price)" 
+                    type="number"
+                    className="px-4 py-3 rounded-xl border border-slate-200"
+                    value={variant.compareAtPrice}
+                    onChange={(e) => updateVariant(index, "compareAtPrice", e.target.value)}
                   />
                   <input 
                     placeholder="Tồn kho" 
@@ -515,8 +556,6 @@ const updateVariant = (index, field, value) => {
                         onChange={(e) => {
                           const selectedValueId = e.target.value;
                           const newVariants = [...formData.variants];
-                          
-                          // Tìm thuộc tính hiện tại trong mảng attributes của biến thể
                           const attrIndex = newVariants[index].attributes.findIndex(a => a.attributeId === attr._id);
                           
                           if (attrIndex > -1) {
@@ -539,7 +578,6 @@ const updateVariant = (index, field, value) => {
                   ))}
                 </div>
 
-                {/* <--- BỔ SUNG VÀO ĐÂY */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500">Ảnh biến thể</label>
@@ -565,7 +603,6 @@ const updateVariant = (index, field, value) => {
                         checked={variant.isDefault}
                         onChange={(e) => {
                           const newVariants = [...formData.variants];
-                          // Đảm bảo chỉ 1 cái là default
                           newVariants.forEach((v, i) => v.isDefault = (i === index ? e.target.checked : false));
                           setFormData({ ...formData, variants: newVariants });
                         }}
@@ -574,17 +611,14 @@ const updateVariant = (index, field, value) => {
                     </label>
                   </div>
                 </div>
-                {/* KẾT THÚC BỔ SUNG */}
               </div>
             ))}
           </div>        
         </div>
 
-
-        {/* CỘT PHẢI - CHIẾM 3 CỘT */}
+        {/* CỘT PHẢI - XUẤT BẢN */}
         <div className="lg:col-span-3">
-          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm  sticky top-6">
-            {/* 1. TRẠNG THÁI XUẤT BẢN */}
+          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm sticky top-6">
             <div className="space-y-6">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -617,9 +651,7 @@ const updateVariant = (index, field, value) => {
               </div>
             </div>
 
-
-            {/* 3. NÚT HÀNH ĐỘNG (Lưu ở dưới cùng Sidebar) */}
-            <div className="space-y-3 pt-6 border-t border-slate-50">
+            <div className="space-y-3 pt-6 border-t border-slate-50 mt-6">
               <button
                 type="submit"
                 disabled={isSubmitting}

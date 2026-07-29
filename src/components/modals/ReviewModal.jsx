@@ -1,17 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // Đảm bảo bạn đã có file ratingService hoặc đổi đường dẫn import này cho khớp với dự án của bạn
 import { createRating } from "../../services/rating"; 
 
 export default function ReviewModal({ isOpen, onClose, orderDetailId, productInfo, onSuccess }) {
-  // State lưu giá trị đánh giá (phục vụ tương tác UI)
-  const [overallRating, setOverallRating] = useState(5); // Mặc định 5 sao (Tuyệt vời)
   const [detailedRatings, setDetailedRatings] = useState({
-    quality: 5,          // Chất lượng sản phẩm
+    quality: 5,         // Chất lượng sản phẩm
     descriptionMatch: 5, // Đúng với mô tả
     priceValue: 5,       // Giá cả / Giá trị
   });
+
+  // State lưu giá trị đánh giá chung (tự động tính toán)
+  const [overallRating, setOverallRating] = useState(5);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false); // State xử lý trạng thái đang gửi
+
+  // Tự động tính điểm trung bình cộng từ "Theo trải nghiệm" để quy ra "Đánh giá chung"
+  useEffect(() => {
+    const values = Object.values(detailedRatings);
+    const sum = values.reduce((acc, val) => acc + val, 0);
+    const average = Math.round(sum / values.length); // Làm tròn thành số nguyên từ 1 đến 5
+    setOverallRating(average);
+  }, [detailedRatings]);
 
   const ratingLabels = {
     1: "Rất Tệ",
@@ -101,29 +110,27 @@ export default function ReviewModal({ isOpen, onClose, orderDetailId, productInf
             </h4>
           </div>
           
-          {/* 1. Phần Đánh giá chung */}
+          {/* 1. Phần Đánh giá chung (Hiển thị tự động dựa theo điểm trung bình, vô hiệu hóa việc click chọn thủ công) */}
           <div className="space-y-3">
             <h4 className="text-sm font-bold text-gray-900">Đánh giá chung</h4>
             <div className="flex justify-between items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button
+                <div
                   key={star}
-                  type="button"
-                  onClick={() => setOverallRating(star)}
-                  className="flex flex-col items-center gap-1 group focus:outline-none"
+                  className="flex flex-col items-center gap-1 group"
                 >
-                  <span className={`text-3xl transition-transform group-hover:scale-110 ${star <= overallRating ? "text-yellow-400" : "text-gray-300"}`}>
+                  <span className={`text-3xl transition-transform ${star <= overallRating ? "text-yellow-400" : "text-gray-300"}`}>
                     ★
                   </span>
                   <span className={`text-xs font-medium ${star === overallRating ? "text-[#d70018] font-bold" : "text-gray-500"}`}>
                     {ratingLabels[star]}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* 2. Phần Theo trải nghiệm (Tiêu chí chung cho mọi sản phẩm) */}
+          {/* 2. Phần Theo trải nghiệm (Tiêu chí dùng để chấm điểm và tự động quy đổi ra đánh giá chung) */}
           <div className="space-y-4">
             <h4 className="text-sm font-bold text-gray-900">Theo trải nghiệm</h4>
             

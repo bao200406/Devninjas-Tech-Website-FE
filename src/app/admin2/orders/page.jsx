@@ -5,6 +5,7 @@ import {
   Package, ArrowUpDown, Wallet, AlertCircle, TrendingUp,
 } from "lucide-react";
 import OrderDetailModal from "../../../components/orders/OrderDetailModal";
+import CancelOrderModal from "../../../components/modals/CancelOrderModal";
 import { getAllOrdersAdmin , updateOrderStatusAdmin } from "../../../services/orderService"; 
 
 export default function OrdersPage() {
@@ -15,6 +16,10 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  // Thêm state phục vụ cho modal hủy đơn hàng
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
+
   const STATUS_FLOW = {
     pending: ["processing", "cancelled"],
     processing: ["shipping", "cancelled"],
@@ -23,8 +28,7 @@ export default function OrdersPage() {
     cancelled: []
   };
 
-
- // Hàm fetch dữ liệu từ API
+  // Hàm fetch dữ liệu từ API
   const fetchOrders = async (page = 1, status = "", searchTerm = "") => {
     setLoading(true);
     try {
@@ -67,15 +71,31 @@ export default function OrdersPage() {
         return;
       }
 
+      // Nếu chuyển sang trạng thái cancelled thì mở Modal chọn lý do
+      if (newStatus === "cancelled") {
+        setOrderToCancel(orderId);
+        setCancelModalOpen(true);
+        return;
+      }
+
       if (!window.confirm(`Bạn có chắc chắn muốn chuyển đơn hàng sang ${newStatus.toUpperCase()}?`)) {
         return;
       }
 
+      // Xử lý các trạng thái bình thường khác
+      executeStatusUpdate(orderId, newStatus, "");
+    };
+
+    // Hàm thực thi gọi API cập nhật trạng thái
+    const executeStatusUpdate = async (orderId, newStatus, cancellationReason) => {
       try {
-        // Gọi API với đúng cấu trúc { status: newStatus }
-        await updateOrderStatusAdmin(orderId, { status: newStatus });
+        await updateOrderStatusAdmin(orderId, { 
+          status: newStatus, 
+          cancellation_reason: cancellationReason 
+        });
         
         alert("Cập nhật trạng thái thành công!");
+        setCancelModalOpen(false);
         
         // Tải lại dữ liệu
         fetchOrders(pagination.page, activeTab, search);
@@ -85,7 +105,6 @@ export default function OrdersPage() {
         alert(msg);
       }
     };
-
 
   return (
     <div className="space-y-6">
@@ -205,7 +224,7 @@ export default function OrdersPage() {
                           order.status === "shipping" ? "bg-cyan-100 text-cyan-700" :
                           order.status === "delivered" ? "bg-green-100 text-green-800" :
                           "bg-rose-100 text-rose-700"
-                        }`}
+                          }`}
                       >
                         <option value={order.status}>{order.status.toUpperCase()}</option>
                         {STATUS_FLOW[order.status]?.map((nextStatus) => (
@@ -228,16 +247,16 @@ export default function OrdersPage() {
            <span>Showing {orders.length} of {pagination.total} orders</span>
            <div className="flex gap-2">
              <button 
-              disabled={pagination.page === 1}
-              onClick={() => fetchOrders(pagination.page - 1, activeTab)}
-              className="p-2 border border-slate-200 rounded-lg disabled:opacity-50"
+             disabled={pagination.page === 1}
+             onClick={() => fetchOrders(pagination.page - 1, activeTab)}
+             className="p-2 border border-slate-200 rounded-lg disabled:opacity-50"
              >
                <ChevronLeft size={16} />
              </button>
              <button 
-              disabled={pagination.page >= pagination.totalPages}
-              onClick={() => fetchOrders(pagination.page + 1, activeTab)}
-              className="p-2 border border-slate-200 rounded-lg disabled:opacity-50"
+             disabled={pagination.page >= pagination.totalPages}
+             onClick={() => fetchOrders(pagination.page + 1, activeTab)}
+             className="p-2 border border-slate-200 rounded-lg disabled:opacity-50"
              >
                <ChevronRight size={16} />
              </button>
@@ -248,6 +267,11 @@ export default function OrdersPage() {
           order={selectedOrder} 
           open={!!selectedOrder} 
           onOpenChange={(open) => !open && setSelectedOrder(null)} 
+        />
+        <CancelOrderModal 
+          isOpen={cancelModalOpen}
+          onClose={() => setCancelModalOpen(false)}
+          onConfirm={(reason) => executeStatusUpdate(orderToCancel, "cancelled", reason)}
         />
     </div>
   );
