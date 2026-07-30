@@ -1,5 +1,8 @@
 "use client";
 
+import { getAddresses } from "../../services/addressService";
+import { fetchAddressData } from "../api/addressAPI";
+import { getMe } from "../../services/authService";
 import Image from "next/image";
 import { useState , useEffect  } from "react";
 import { NotebookPen } from "lucide-react";
@@ -34,7 +37,7 @@ export default function CheckoutPage() {
  
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [cartItems, setCartItems] = useState([]);
-  const [availableVouchers, setAvailableVouchers] = useState(null);
+  const [availableVouchers, setAvailableVouchers] = useState([]);
   const [isVoucherListOpen, setIsVoucherListOpen] = useState(false);
   const [orderId, setOrderId] = useState(null);
    const subtotal = cartItems.reduce(
@@ -43,7 +46,7 @@ export default function CheckoutPage() {
   );
   const [appliedVoucher, setAppliedVoucher] = useState(null); // Lưu thông tin voucher đã chọn
   const [discount, setDiscount] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(subtotal);
+  const [totalPrice, setTotalPrice] = useState(0);
   const router = useRouter();
 
     const [formData, setFormData] = useState({
@@ -51,9 +54,13 @@ export default function CheckoutPage() {
     receiverPhone: "",
     receiverEmail: "",
     province: "",
+    district: "",
     ward: "",
     address: "",
   });
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
 
     const handleChange = (e) => {
     setFormData({
@@ -66,16 +73,86 @@ export default function CheckoutPage() {
       try {
         const response = await getCart();
 
-        console.log("Cart response:", response);
+        console.log(response);
 
-        setCartItems(response.data.items);
+        setCartItems(response?.data?.items || []);
       } catch (error) {
            console.log("ERROR:", error.response?.data);
       }
     };
-
     useEffect(() => {
       fetchCart();
+    }, []);
+
+    useEffect(() => {
+      if (!appliedVoucher) {
+        setTotalPrice(subtotal);
+      }
+    }, [subtotal, appliedVoucher]);
+
+
+    useEffect(() => {
+      const loadProvince = async () => {
+        try {
+          const data = await fetchAddressData();
+          setProvinces(data);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+
+      loadProvince();
+    }, []);
+
+
+    useEffect(() => {
+      const fetchDefaultAddress = async () => {
+        try {
+          const [addressRes, user] = await Promise.all([
+            getAddresses(),
+            getMe(),
+          ]);
+
+          const defaultAddress =
+            addressRes.data?.find((item) => item.isDefault) ||
+            addressRes.data?.[0];
+
+          if (!defaultAddress) return;
+
+          setFormData({
+            receiverName: defaultAddress.fullname || "",
+            receiverPhone: defaultAddress.phone || "",
+            receiverEmail: user.email || "",
+            province: defaultAddress.province || "",
+            district: defaultAddress.district || "",
+            ward: defaultAddress.ward || "",
+            address: defaultAddress.detail || "",
+          });
+
+          const data = await fetchAddressData();
+
+          const selectedProvince = data.find(
+            (p) => p.name === defaultAddress.province
+          );
+
+          if (selectedProvince) {
+            setDistricts(selectedProvince.districts || []);
+
+            const selectedDistrict = selectedProvince.districts.find(
+              (d) => d.name === defaultAddress.district
+            );
+
+            if (selectedDistrict) {
+              setWards(selectedDistrict.wards || []);
+            }
+          }
+
+        } catch (error) {
+          console.error(error);
+        }
+      };
+
+      fetchDefaultAddress();
     }, []);
 
     // Thêm vào ngay sau khi khai báo các useState
@@ -239,25 +316,61 @@ export default function CheckoutPage() {
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <select
-                      aria-label="Tỉnh hoặc thành phố"
                       name="province"
                       value={formData.province}
-                      onChange={handleChange}
+                      onChange={async (e) => {
+                        const province = e.target.value;
+
+                        const data = await fetchAddressData();
+
+                        const selectedProvince = data.find(
+                          (p) => p.name === province
+                        );
+
+
+                        setFormData({
+                          ...formData,
+                          province,
+                          district: "",
+                          ward: "",
+                        });
+
+
+                        // lấy quận đầu tiên của tỉnh mới
+                        const firstDistrict = selectedProvince?.districts?.[0];
+
+
+                        if (firstDistrict) {
+                          setWards(firstDistrict.wards || []);
+                        } else {
+                          setWards([]);
+                        }
+
+                      }}
                       className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none"
                     >
                       <option value="">Chọn tỉnh/thành</option>
-                      <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+
+                      {provinces.map((item) => (
+                        <option key={item.code} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
 
                     <select
-                      aria-label="Phường hoặc xã"
                       name="ward"
                       value={formData.ward}
                       onChange={handleChange}
                       className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none"
                     >
                       <option value="">Chọn phường/xã</option>
-                      <option value="Phường Đa Kao">Phường Đa Kao</option>
+
+                      {wards.map((item) => (
+                        <option key={item.code} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -428,7 +541,7 @@ export default function CheckoutPage() {
                     </div>
 
                     <p className="text-sm font-semibold text-[#005BAC]">
-                      {item.price}
+                      {item.price.toLocaleString("vi-VN")}đ
                     </p>
                   </div>
                 ))}
@@ -436,37 +549,234 @@ export default function CheckoutPage() {
 
               {/* Voucher */}
               <div className="mt-6">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-sm font-semibold text-gray-800">Chọn Voucher</h3>
-                  <button 
+
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
+                      🎟️
+                    </div>
+
+                    <h3 className="text-sm font-semibold text-gray-800">
+                      Voucher giảm giá
+                    </h3>
+                  </div>
+
+
+                  <button
                     type="button"
-                    onClick={() => setIsVoucherListOpen(!isVoucherListOpen)} 
-                    className="text-sm text-[#005BAC] hover:underline"
+                    onClick={() => setIsVoucherListOpen(!isVoucherListOpen)}
+                    className="text-sm font-medium text-[#005BAC] hover:underline"
                   >
-                    {isVoucherListOpen ? "Ẩn bớt" : "Xem tất cả"}
+                    {isVoucherListOpen ? "Thu gọn" : "Xem tất cả"}
                   </button>
+
                 </div>
 
+
                 {isVoucherListOpen && (
-                  <div className="space-y-2 mt-2 max-h-40 overflow-y-auto border p-2 rounded-lg bg-white">
+
+                  <div className="
+                    space-y-3 
+                    max-h-52 
+                    overflow-y-auto
+                    pr-1
+                    scrollbar-thin
+                  ">
+
                     {availableVouchers.length > 0 ? (
-                      availableVouchers.map((v) => (
-                        <div key={v._id} className="flex justify-between items-center p-2 border-b last:border-0 text-sm">
-                          <span>{v.code} - Giảm {v.type === 'percentage' ? `${v.value}%` : `${v.value.toLocaleString()}đ`}</span>
-                          <button 
+
+                      availableVouchers.map((v)=>(
+
+                        <div
+                          key={v._id}
+                          className="
+                            relative
+                            flex
+                            items-center
+                            justify-between
+                            rounded-xl
+                            border
+                            border-dashed
+                            border-blue-300
+                            bg-gradient-to-r
+                            from-blue-50
+                            to-white
+                            p-3
+                            transition
+                            hover:border-[#005BAC]
+                            hover:shadow-md
+                          "
+                        >
+
+
+                          {/* Left voucher */}
+                          <div className="flex items-center gap-3">
+
+                            <div className="
+                              flex
+                              h-10
+                              w-10
+                              items-center
+                              justify-center
+                              rounded-full
+                              bg-[#005BAC]
+                              text-white
+                              text-lg
+                            ">
+                              %
+                            </div>
+
+
+                            <div>
+
+                              <p className="
+                                text-sm
+                                font-bold
+                                text-gray-800
+                              ">
+                                {v.code}
+                              </p>
+
+
+                              <p className="
+                                text-xs
+                                text-gray-500
+                                mt-1
+                              ">
+                                Giảm{" "}
+                                {
+                                  v.type === "percentage"
+                                  ? `${v.value}%`
+                                  : `${v.value.toLocaleString("vi-VN")}đ`
+                                }
+                              </p>
+
+
+                              <p className="
+                                text-[11px]
+                                text-gray-400
+                                mt-1
+                              ">
+                                Áp dụng cho đơn hàng đủ điều kiện
+                              </p>
+
+
+                            </div>
+
+
+                          </div>
+
+
+
+                          {/* Button */}
+                          <button
+
                             type="button"
-                            onClick={() => handleApplyVoucher(v)} // Hàm này bạn sẽ định nghĩa bên dưới
-                            className="px-3 py-1 bg-[#005BAC] text-white rounded text-xs"
+
+                            onClick={() => handleApplyVoucher(v)}
+
+                            className="
+                              rounded-lg
+                              bg-[#005BAC]
+                              px-4
+                              py-2
+                              text-xs
+                              font-semibold
+                              text-white
+                              transition
+                              hover:bg-[#004a8f]
+                              active:scale-95
+                            "
+
                           >
+
                             Chọn
+
                           </button>
+
+
+
                         </div>
+
                       ))
+
                     ) : (
-                      <p className="text-xs text-gray-400 p-2">Không có voucher khả dụng</p>
+
+                      <div className="
+                        rounded-xl
+                        border
+                        bg-gray-50
+                        p-4
+                        text-center
+                      ">
+
+                        <p className="text-sm text-gray-400">
+                          Hiện không có voucher khả dụng
+                        </p>
+
+                      </div>
+
                     )}
+
+
                   </div>
+
                 )}
+
+
+
+                {/* Voucher đã chọn */}
+                {appliedVoucher && (
+
+                  <div className="
+                    mt-3
+                    flex
+                    items-center
+                    justify-between
+                    rounded-xl
+                    bg-green-50
+                    border
+                    border-green-200
+                    px-3
+                    py-2
+                  ">
+
+                    <div>
+
+                      <p className="
+                        text-xs
+                        font-semibold
+                        text-green-700
+                      ">
+                        Đã áp dụng voucher
+                      </p>
+
+
+                      <p className="
+                        text-sm
+                        font-bold
+                        text-green-800
+                      ">
+                        {appliedVoucher.code}
+                      </p>
+
+                    </div>
+
+
+                    <span className="
+                      text-sm
+                      font-bold
+                      text-green-600
+                    ">
+                      -{discount.toLocaleString("vi-VN")}đ
+                    </span>
+
+
+                  </div>
+
+                )}
+
+
               </div>
 
               {/* Total */}
