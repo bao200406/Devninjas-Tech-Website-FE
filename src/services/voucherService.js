@@ -32,3 +32,10 @@ export const applyVoucher = async (voucherCode, orderId) => {
   });
   return response.data;
 };
+/**
+ * Lấy tất cả voucher (Admin)
+ */
+export const getAllVouchers = async () => {
+  const response = await api.get("/vouchers");
+  return response.data;
+};

@@ -15,6 +15,7 @@ import {
   Layers,
   ChevronDown,
   Settings,
+  Ticket,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -56,6 +57,7 @@ export default function Sidebar() {
           ],
         },
         { name: "Customers", icon: Users, href: "/admin2/users" },
+        { name: "Voucher", icon: Ticket, href: "/admin2/vouchers" },
         { name: "Invoices", icon: FileText, href: "admin2/invoices" },
       ],
     },
