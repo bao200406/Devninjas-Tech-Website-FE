@@ -3,6 +3,20 @@ import { useEffect, useState } from "react";
 import { getFlashSaleItems } from "../../services/flashSaleItemService";
 import { getFlashSalesByDate } from "../../services/flashSaleService";
 
+// Hàm helper xử lý URL ảnh đồng bộ với ProductCard
+const getPublicUrl = (path) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
+
+  const index = path.indexOf('uploads');
+  if (index !== -1) {
+    const relativePath = path.substring(index).replace(/\\/g, '/');
+    return `http://localhost:5000/${relativePath}`;
+  }
+  
+  return `http://localhost:5000/uploads/products/${path.replace(/\\/g, '/')}`;
+};
+
 export default function FlashSaleSection() {
   const [tabs, setTabs] = useState([]);         
   const [activeTabId, setActiveTabId] = useState(null); 
@@ -155,13 +169,27 @@ export default function FlashSaleSection() {
               const progress = totalQuantity > 0 ? ((item.sold_count || 0) / totalQuantity) * 100 : 0;
               const discountPercent = originalPrice > 0 ? Math.round(((originalPrice - flash_price) / originalPrice) * 100) : 0;
 
+              // Ưu tiên lấy ảnh từ variant trước (giống ProductGallery), nếu không có thì lấy ảnh sản phẩm gốc
+              const variantImage = item?.productVariantId?.image || (item?.productVariantId?.images && item.productVariantId.images[0]);
+              const displayImage = variantImage || item.productId?.image;
+
               return (
                 <div key={item._id} className="bg-white rounded-xl p-3 text-gray-900 relative shadow-sm hover:shadow-lg transition-shadow flex flex-col gap-y-2">
                   <span className="absolute top-2 right-2 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold z-10">
                     -{discountPercent}%
                   </span>
-                  <div className="h-32 flex items-center justify-center overflow-hidden">
-                    <img src={item.productId?.image} alt={item.productId?.name} className="max-h-full object-contain hover:scale-105 transition-transform duration-300" />
+                  <div className="h-32 flex items-center justify-center overflow-hidden bg-gray-50 rounded-lg p-2">
+                    {displayImage ? (
+                      <img 
+                        src={getPublicUrl(displayImage)} 
+                        alt={item.productId?.name} 
+                        className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">Không có ảnh</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col gap-y-1">
                     <h3 className="text-sm font-bold line-clamp-2 leading-tight text-gray-800">{item.productId?.name}</h3>

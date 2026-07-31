@@ -189,15 +189,27 @@ export default function CheckoutPage() {
       };
 
       try {
-        // Dùng updateOrder thay vì createOrder
+        // 1. Cập nhật thông tin đơn hàng trước
         const response = await orderService.updateOrder(orderId, orderData);
 
         if (response.success) {
-          if (paymentMethod === "stripe" && response.url) {
-            window.location.href = response.url;
-          } else {
-            router.push(`/checkout/success?order_id=${orderId}`);
+          // 2. Nếu chọn thanh toán bằng Stripe, gọi API tạo link thanh toán Stripe
+          if (paymentMethod === "stripe") {
+            const stripeRes = await createStripePayment({ orderId, totalPrice });
+            // Kiểm tra cấu trúc trả về từ service của bạn (thường là stripeRes.url hoặc stripeRes.data.url)
+            const stripeUrl = stripeRes?.url || stripeRes?.data?.url;
+            
+            if (stripeUrl) {
+              window.location.href = stripeUrl; // Chuyển hướng sang trang thanh toán Stripe
+              return;
+            } else {
+              alert("Không thể tạo liên kết thanh toán Stripe.");
+              return;
+            }
           }
+
+          // 3. Nếu là COD hoặc các hình thức khác thì đi đến trang success bình thường
+          router.push(`/checkout/success?order_id=${orderId}`);
         }
       } catch (error) {
         console.error("Lỗi chốt đơn:", error);

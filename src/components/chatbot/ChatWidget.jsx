@@ -44,7 +44,12 @@ export default function ChatWidget() {
       const data = await sendChatMessage(userMsg);
 
       if (data.success) {
-        setMessages(prev => [...prev, { sender: 'bot', text: data.reply }]);
+        // Lưu thêm danh sách sản phẩm (products) trả về từ backend vào state của tin nhắn
+        setMessages(prev => [...prev, { 
+          sender: 'bot', 
+          text: data.reply, 
+          products: data.products || [] 
+        }]);
       } else {
         setMessages(prev => [...prev, { sender: 'bot', text: 'Hiện tại hệ thống bận, bạn vui lòng thử lại sau nhé!' }]);
       }
@@ -76,7 +81,6 @@ export default function ChatWidget() {
               1
             </span>
           </div>
-          <span className="font-semibold text-sm tracking-wide">Tư vấn thông minh</span>
         </button>
       )}
 
@@ -121,13 +125,67 @@ export default function ChatWidget() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
+                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
                     msg.sender === 'user'
                       ? 'bg-red-500 text-white rounded-br-sm'
                       : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100'
                   }`}
                 >
-                  {msg.text}
+                  {/* Đoạn text tư vấn */}
+                  <div className="whitespace-pre-wrap break-words">{msg.text}</div>
+
+                  {/* THẺ HIỂN THỊ SẢN PHẨM TRỰC QUAN (CARD) */}
+                  {msg.products && msg.products.length > 0 && (
+                    <div className="mt-3 flex flex-col gap-2 pt-2 border-t border-gray-100">
+                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Sản phẩm gợi ý:</p>
+                      {msg.products.map((prod) => (
+                        <div key={prod._id} className="flex items-center gap-2.5 bg-gray-50 p-2 rounded-xl border border-gray-200 hover:border-red-400 transition-all">
+                          {/* Ảnh sản phẩm */}
+                          <img 
+                          src={
+                            (() => {
+                              const imgPath = prod.image || prod.imageUrl || prod.thumbnail || prod.photo || (Array.isArray(prod.images) ? prod.images[0] : null);
+                              if (!imgPath) return 'https://via.placeholder.com/60';
+                              
+                              // Nếu đường dẫn đã là URL đầy đủ thì giữ nguyên
+                              if (imgPath.startsWith('http')) return imgPath;
+
+                              // Đường dẫn thư mục lưu ảnh thực tế trên server của bạn
+                              const folderPrefix = '/uploads/products/'; 
+                              
+                              // Loại bỏ dấu gạch chéo thừa nếu tên file đã có sẵn
+                              const cleanImgPath = imgPath.startsWith('/') ? imgPath.slice(1) : imgPath;
+                              const cleanFolder = folderPrefix.endsWith('/') ? folderPrefix : `${folderPrefix}/`;
+
+                              return `http://localhost:5000${cleanFolder}${cleanImgPath}`;
+                            })()
+                          } 
+                          alt={prod.name} 
+                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0 border border-gray-100 bg-gray-100"
+                          onError={(e) => { 
+                            e.target.src = 'https://via.placeholder.com/60'; 
+                          }}
+                        />
+                          {/* Tên và Giá */}
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-semibold text-xs text-gray-800 truncate">{prod.name}</h5>
+                            <p className="text-xs text-red-500 font-bold mt-0.5">
+                              {prod.variants?.[0]?.price ? `${prod.variants[0].price.toLocaleString()}đ` : 'Liên hệ'}
+                            </p>
+                          </div>
+                          {/* Nút xem chi tiết */}
+                          <a 
+                            href={`/products/${prod._id}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg hover:bg-red-600 transition-colors whitespace-nowrap font-medium"
+                          >
+                            Xem
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

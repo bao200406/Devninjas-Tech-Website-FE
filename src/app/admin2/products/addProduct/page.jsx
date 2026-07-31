@@ -49,7 +49,7 @@ export default function NewProductPage({ onSave }) {
     ],
     // --- ĐÃ BỔ SUNG compareAtPrice VÀ isDefault VÀO MỖI VARIANT ---
     variants: [
-      { sku: "", price: "", compareAtPrice: "", stock: "", image: null, isDefault: false, attributes: [] }
+      { sku: "", price: "", compareAtPrice: "", stock: "", image: null, images: [], isDefault: false, attributes: [] }
     ]
   });
 
@@ -144,6 +144,16 @@ export default function NewProductPage({ onSave }) {
           variantsData.append(`variants[${index}][imageIndex]`, index);
         }
 
+        // 2. Gửi nhiều ảnh của biến thể (dùng chung field "variantImages" hoặc tuỳ cấu hình backend của bạn)
+        if (v.images && v.images.length > 0) {
+          v.images.forEach((imgFile) => {
+            if (imgFile instanceof File) {
+              variantsData.append("variantImages", imgFile);
+              variantsData.append(`variants[${index}][multiImageIndices]`, index);
+            }
+          });
+        }
+
         v.attributes.forEach((attr, attrIdx) => {
           variantsData.append(`variants[${index}][attributes][${attrIdx}][attributeId]`, attr.attributeId);
           variantsData.append(`variants[${index}][attributes][${attrIdx}][attributeValueId]`, attr.attributeValueId);
@@ -165,7 +175,7 @@ export default function NewProductPage({ onSave }) {
         status: "Active",
         isFeatured: false,
         specifications: [{ key: "", value: "" }],
-        variants: [{ sku: "", price: "", compareAtPrice: "", stock: "", image: null, isDefault: false, attributes: [] }]
+        variants: [{ sku: "", price: "", compareAtPrice: "", stock: "", image: null, images: [], isDefault: false, attributes: [] }]
       });
     } catch (error) {
       toast.dismiss(toastId);
@@ -492,7 +502,7 @@ export default function NewProductPage({ onSave }) {
 
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sku: "", price: "", compareAtPrice: "", stock: "", image: null, isDefault: false, attributes: [] }] })}
+                onClick={() => setFormData({ ...formData, variants: [...formData.variants, { sku: "", price: "", compareAtPrice: "", stock: "", image: null, images: [], isDefault: false, attributes: [] }] })}
                 className="text-sm font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg hover:bg-indigo-100 transition-colors"
               >
                 + Thêm biến thể
@@ -578,13 +588,16 @@ export default function NewProductPage({ onSave }) {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500">Ảnh biến thể</label>
+                {/* 2 PHẦN UPLOAD ẢNH RIÊNG BIỆT */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                  
+                  {/* PHẦN 1: ẢNH BIẾN THỂ CHÍNH */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500">1. Ảnh biến thể chính (Hiển thị đại diện)</label>
                     <input 
                       type="file" 
                       accept="image/*"
-                      className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
@@ -594,22 +607,91 @@ export default function NewProductPage({ onSave }) {
                         }
                       }}
                     />
+                    
+                    {variant.image && (
+                      <div className="w-20 h-20 relative rounded-xl overflow-hidden border border-slate-200 group mt-2">
+                        <img 
+                          src={typeof variant.image === 'object' ? URL.createObjectURL(variant.image) : variant.image} 
+                          className="w-full h-full object-cover" 
+                          alt="Main variant preview" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newVariants = [...formData.variants];
+                            newVariants[index].image = null;
+                            setFormData({ ...formData, variants: newVariants });
+                          }}
+                          className="absolute top-1 right-1 p-1 bg-white rounded-full text-rose-500 shadow-md hover:scale-110 transition-transform"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center pt-5">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 rounded border-slate-300 text-indigo-600"
-                        checked={variant.isDefault}
-                        onChange={(e) => {
+
+                  {/* PHẦN 2: NHIỀU ẢNH BIẾN THỂ (CHO SLIDER) */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500">2. Nhiều ảnh biến thể (Phục vụ Slider chi tiết)</label>
+                    <input 
+                      type="file" 
+                      multiple
+                      accept="image/*"
+                      className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files);
+                        if (files.length > 0) {
                           const newVariants = [...formData.variants];
-                          newVariants.forEach((v, i) => v.isDefault = (i === index ? e.target.checked : false));
+                          const currentImages = newVariants[index].images || [];
+                          newVariants[index].images = [...currentImages, ...files];
                           setFormData({ ...formData, variants: newVariants });
-                        }}
-                      />
-                      <span className="text-sm font-bold text-slate-700">Đặt làm mặc định</span>
-                    </label>
+                        }
+                      }}
+                    />
+
+                    {variant.images && variant.images.length > 0 && (
+                      <div className="grid grid-cols-4 gap-2 mt-2">
+                        {variant.images.map((imgFile, imgIndex) => {
+                          const previewUrl = typeof imgFile === 'object' ? URL.createObjectURL(imgFile) : imgFile;
+                          return (
+                            <div key={imgIndex} className="aspect-square relative rounded-xl overflow-hidden border border-slate-200 group">
+                              <img src={previewUrl} className="w-full h-full object-cover" alt="Slider preview" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newVariants = [...formData.variants];
+                                    newVariants[index].images = newVariants[index].images.filter((_, i) => i !== imgIndex);
+                                    setFormData({ ...formData, variants: newVariants });
+                                  }}
+                                  className="p-1.5 bg-white rounded-full text-rose-500 shadow-md hover:scale-110 transition-transform"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
+
+                </div>
+
+                <div className="flex items-center pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                      checked={variant.isDefault}
+                      onChange={(e) => {
+                        const newVariants = [...formData.variants];
+                        newVariants.forEach((v, i) => v.isDefault = (i === index ? e.target.checked : false));
+                        setFormData({ ...formData, variants: newVariants });
+                      }}
+                    />
+                    <span className="text-sm font-bold text-slate-700">Đặt làm mặc định</span>
+                  </label>
                 </div>
               </div>
             ))}

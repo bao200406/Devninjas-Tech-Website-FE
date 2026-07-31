@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getFiltersByCategory } from "../../services/categoryAttributeService";
@@ -12,14 +12,16 @@ export default function FilterSidebar({ categoryId, isOpen, onClose, filters = {
     setFilters(prev => ({ ...prev, minPrice: min, maxPrice: max }));
   };
 
- // Gọi API lấy bộ lọc động theo categoryId
+  // Gọi API lấy bộ lọc động theo categoryId và reset state filter khi đổi danh mục
   useEffect(() => {
     if (categoryId) {
+      setFilters({ minPrice: null, maxPrice: null, attributeValueIds: [] });
+
       getFiltersByCategory(categoryId).then((res) => {
         if (res.success) setFilterGroups(res.data);
       });
     }
-  }, [categoryId]);
+  }, [categoryId, setFilters]);
 
   const toggleAttribute = (id) => {
     setFilters(prev => {

@@ -50,9 +50,9 @@ export default function Home() {
         </div>
         
         {/* Flash Sale - Nổi bật */}
-        <div data-aos="fade-right">
+        {/* <div data-aos="fade-right">
           <FlashSaleSection />
-        </div>
+        </div> */}
 
         {/* 3. Truyền dữ liệu thật vào các Section */}
         <div data-aos="fade-up">
