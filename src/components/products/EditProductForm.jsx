@@ -114,8 +114,8 @@ export default function EditProductForm({
 
     // 3. Nếu là ảnh CŨ (đã có trên server, kiểu dữ liệu là String)
     if (typeof formData.image === "string") {
-      // Thay 'http://localhost:5000/uploads/' bằng domain API thực tế của bạn
-      const serverImageUrl = `http://localhost:5000/uploads/products/${formData.image}`;
+      // Thay 'https://devninjas-tech-website-be.onrender.com/uploads/' bằng domain API thực tế của bạn
+      const serverImageUrl = `https://devninjas-tech-website-be.onrender.com/uploads/products/${formData.image}`;
       setPreviewUrl(serverImageUrl);
     }
   }, [formData.image]);

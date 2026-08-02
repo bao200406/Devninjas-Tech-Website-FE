@@ -44,7 +44,7 @@ export default function EditCategoryPage() {
           displayOrder: data.displayOrder || 0,
           status: data.status,
         });
-        if (data.image) setPreviewImg(`http://localhost:5000/uploads/categories/${data.image}`);
+        if (data.image) setPreviewImg(`https://devninjas-tech-website-be.onrender.com/uploads/categories/${data.image}`);
         setIsLoading(false);
       } catch (error) {
         toast.error("Không tìm thấy danh mục");

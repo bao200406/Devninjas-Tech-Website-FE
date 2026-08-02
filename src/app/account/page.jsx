@@ -84,7 +84,7 @@ const AccountInfoPage = () => {
            <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-lg shadow-md">
               {user?.avatar ? (
                 <img 
-                  src={`http://localhost:5000/uploads/users/${user.avatar}`} 
+                  src={`https://devninjas-tech-website-be.onrender.com/uploads/users/${user.avatar}`} 
                   alt={user?.name} 
                   className="w-full h-full object-cover"
                 />

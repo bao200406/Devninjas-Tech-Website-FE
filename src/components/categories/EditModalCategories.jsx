@@ -32,7 +32,7 @@ export default function EditModalCategories({ isOpen, onClose, onSave, id }) {
             });
             // Set preview từ ảnh cũ
             setImagePreview(
-              `http://localhost:5000/uploads/categories/${categoryData.image}`,
+              `https://devninjas-tech-website-be.onrender.com/uploads/categories/${categoryData.image}`,
             );
           }
         } catch (err) {

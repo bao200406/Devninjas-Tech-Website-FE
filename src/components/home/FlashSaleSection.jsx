@@ -11,10 +11,10 @@ const getPublicUrl = (path) => {
   const index = path.indexOf('uploads');
   if (index !== -1) {
     const relativePath = path.substring(index).replace(/\\/g, '/');
-    return `http://localhost:5000/${relativePath}`;
+    return `https://devninjas-tech-website-be.onrender.com/${relativePath}`;
   }
   
-  return `http://localhost:5000/uploads/products/${path.replace(/\\/g, '/')}`;
+  return `https://devninjas-tech-website-be.onrender.com/uploads/products/${path.replace(/\\/g, '/')}`;
 };
 
 export default function FlashSaleSection() {

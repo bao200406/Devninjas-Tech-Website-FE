@@ -24,7 +24,7 @@ const Sidebar = ({ user }) => {
          <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
            {user?.avatar ? (
              <img 
-               src={`http://localhost:5000/uploads/users/${user.avatar}`} 
+               src={`https://devninjas-tech-website-be.onrender.com/uploads/users/${user.avatar}`} 
                alt={user?.name} 
                className="w-full h-full object-cover"
              />

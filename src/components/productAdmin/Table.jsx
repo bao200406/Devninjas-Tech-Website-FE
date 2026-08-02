@@ -252,7 +252,7 @@ export default function ProductPage() {
                         <div className="w-12 h-12 shrink-0 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 flex items-center justify-center">
                           {item.image ? (
                             <img
-                              src={`http://localhost:5000/uploads/products/${item.image}`}
+                              src={`https://devninjas-tech-website-be.onrender.com/uploads/products/${item.image}`}
                               alt={item.name}
                               className="max-w-full max-h-full object-contain drop-shadow-sm"
                               onError={(e) => {

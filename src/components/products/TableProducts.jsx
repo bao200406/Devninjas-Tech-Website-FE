@@ -138,7 +138,7 @@ export default function TableProduct() {
 
                   <td className="p-4 ">
                     <img
-                      src={`http://localhost:5000/uploads/products/${item.image}`}
+                      src={`https://devninjas-tech-website-be.onrender.com/uploads/products/${item.image}`}
                       alt=""
                       className="w-40 h-auto m-auto"
                     />

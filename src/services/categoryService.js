@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000";
+const API_URL = "https://devninjas-tech-website-be.onrender.com";
 
 export const getAllCategories = async () => {
   try {
