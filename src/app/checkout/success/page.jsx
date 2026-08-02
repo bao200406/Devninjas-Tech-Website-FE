@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { CheckCircle2, ShoppingBag, ArrowRight, Copy } from "lucide-react";
 import PrintButton from "@/components/button/PrintButton";
@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 // 🔥 IMPORT CHÍNH HÀM SERVICE CỦA BẠN
 import { getOrderById } from "../../../services/orderService"; 
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
     const searchParams = useSearchParams();
     const order_id = searchParams.get('order_id');
     
@@ -213,5 +213,20 @@ export default function CheckoutSuccessPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function CheckoutSuccessPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                    <h2 className="text-xl font-bold text-slate-800">Đang tải trang...</h2>
+                </div>
+            </div>
+        }>
+            <CheckoutSuccessContent />
+        </Suspense>
     );
 }
