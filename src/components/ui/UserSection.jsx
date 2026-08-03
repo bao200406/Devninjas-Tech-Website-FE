@@ -25,7 +25,7 @@ export default function UserSection() {
   const handleLogout = async () => {
     await logout();
     setIsOpen(false);
-    router.push('/login');
+    router.push('/');
   };
 
   if (!user) {
