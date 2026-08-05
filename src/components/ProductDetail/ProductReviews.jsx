@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getRatingsByProduct } from "../../services/rating"; 
 
 export default function ProductReviews({ productId }) {
@@ -6,83 +6,112 @@ export default function ProductReviews({ productId }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const ratingLabels = {
+  const ratingLabels = useMemo(() => ({
     1: "Rất Tệ",
     2: "Tệ",
     3: "Bình thường",
     4: "Tốt",
     5: "Tuyệt vời",
-  };
+  }), []);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchReviews = async () => {
       if (!productId) return;
       try {
         setLoading(true);
         const data = await getRatingsByProduct(productId);
-        setReviews(Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : data?.reviews || []);
+        if (isMounted) {
+          const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : data?.reviews || [];
+          setReviews(list);
+        }
       } catch (error) {
         console.error("Lỗi khi tải danh sách đánh giá:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchReviews();
+    return () => { isMounted = false; };
   }, [productId]);
 
-  // --- TÍNH TOÁN DỮ LIỆU ĐỘNG CHO KHỐI TỔNG QUAN ---
-  const totalReviews = reviews.length;
-
-  // 1. Tính điểm trung bình tổng quan (overallRating)
-  const averageRating = totalReviews > 0 
-    ? (reviews.reduce((acc, r) => acc + (r.overallRating || r.rating || 5), 0) / totalReviews).toFixed(1)
-    : "0.0";
-
-  // 2. Tính số lượng và phần trăm cho từng mốc sao (5, 4, 3, 2, 1)
-  const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-  reviews.forEach((r) => {
-    const star = r.overallRating || r.rating || 5;
-    if (starCounts[star] !== undefined) {
-      starCounts[star] += 1;
+  // --- TÍNH TOÁN DỮ LIỆU TỔNG QUAN BẰNG USEMEMO (TỐI ƯU HIỆU SUẤT) ---
+  const { totalReviews, averageRating, starProgressData, experienceData } = useMemo(() => {
+    const total = reviews.length;
+    if (total === 0) {
+      return {
+        totalReviews: 0,
+        averageRating: "0.0",
+        starProgressData: [5, 4, 3, 2, 1].map(star => ({ star, count: "0 đánh giá", percent: "0%" })),
+        experienceData: [
+          { label: "Chất lượng sản phẩm", score: "5.0/5", count: "(0 đánh giá)" },
+          { label: "Đúng với mô tả", score: "5.0/5", count: "(0 đánh giá)" },
+          { label: "Giá cả / Giá trị", score: "5.0/5", count: "(0 đánh giá)" },
+        ]
+      };
     }
-  });
 
-  const starProgressData = [5, 4, 3, 2, 1].map((star) => {
-    const count = starCounts[star];
-    const percent = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
-    return {
-      star,
-      count: `${count} đánh giá`,
-      percent: `${percent}%`,
-    };
-  });
+    // 1. Điểm trung bình tổng quan
+    const sumRating = reviews.reduce((acc, r) => acc + (r.overallRating || r.rating || 5), 0);
+    const avg = (sumRating / total).toFixed(1);
 
-  // 3. Tính điểm trung bình cho từng tiêu chí trải nghiệm
-  let totalQuality = 0;
-  let totalDescription = 0;
-  let totalValue = 0;
-  let countDetailed = 0;
+    // 2. Mốc sao
+    const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    let totalQuality = 0, totalDescription = 0, totalValue = 0, countDetailed = 0;
 
-  reviews.forEach((r) => {
-    if (r.detailedRatings) {
-      countDetailed++;
-      totalQuality += r.detailedRatings.quality || 5;
-      totalDescription += r.detailedRatings.descriptionMatch || 5;
-      totalValue += r.detailedRatings.priceValue || 5;
+    reviews.forEach((r) => {
+      const star = r.overallRating || r.rating || 5;
+      if (starCounts[star] !== undefined) starCounts[star] += 1;
+
+      if (r.detailedRatings) {
+        countDetailed++;
+        totalQuality += r.detailedRatings.quality || 5;
+        totalDescription += r.detailedRatings.descriptionMatch || 5;
+        totalValue += r.detailedRatings.priceValue || 5;
+      }
+    });
+
+    const progress = [5, 4, 3, 2, 1].map((star) => {
+      const count = starCounts[star];
+      const percent = Math.round((count / total) * 100);
+      return {
+        star,
+        count: `${count} đánh giá`,
+        percent: `${percent}%`,
+      };
+    });
+
+    // 3. Điểm trải nghiệm
+    const avgQuality = countDetailed > 0 ? (totalQuality / countDetailed).toFixed(1) : "5.0";
+    const avgDescription = countDetailed > 0 ? (totalDescription / countDetailed).toFixed(1) : "5.0";
+    const avgValue = countDetailed > 0 ? (totalValue / countDetailed).toFixed(1) : "5.0";
+
+    const exp = [
+      { label: "Chất lượng sản phẩm", score: `${avgQuality}/5`, count: `(${total} đánh giá)` },
+      { label: "Đúng với mô tả", score: `${avgDescription}/5`, count: `(${total} đánh giá)` },
+      { label: "Giá cả / Giá trị", score: `${avgValue}/5`, count: `(${total} đánh giá)` },
+    ];
+
+    return { totalReviews: total, averageRating: avg, starProgressData: progress, experienceData: exp };
+  }, [reviews]);
+
+  // --- LỌC DANH SÁCH ĐÁNH GIÁ NGAY TRÊN CLIENT (CỰC KỲ NHANH) ---
+  const filteredReviews = useMemo(() => {
+    if (selectedFilter === "all") return reviews;
+    if (selectedFilter === "has_image") {
+      return reviews.filter(r => (r.images && r.images.length > 0) || (r.image && r.image.length > 0));
     }
-  });
-
-  const avgQuality = countDetailed > 0 ? (totalQuality / countDetailed).toFixed(1) : "5.0";
-  const avgDescription = countDetailed > 0 ? (totalDescription / countDetailed).toFixed(1) : "5.0";
-  const avgValue = countDetailed > 0 ? (totalValue / countDetailed).toFixed(1) : "5.0";
-
-  const experienceData = [
-    { label: "Chất lượng sản phẩm", score: `${avgQuality}/5`, count: `(${totalReviews} đánh giá)` },
-    { label: "Đúng với mô tả", score: `${avgDescription}/5`, count: `(${totalReviews} đánh giá)` },
-    { label: "Giá cả / Giá trị", score: `${avgValue}/5`, count: `(${totalReviews} đánh giá)` },
-  ];
-  // ------------------------------------------------
+    if (selectedFilter === "purchased") {
+      return reviews.filter(r => r.isPurchased || r.orderDetailId);
+    }
+    // Lọc theo số sao ("5", "4", "3", "2", "1")
+    const starNum = parseInt(selectedFilter, 10);
+    if (!isNaN(starNum)) {
+      return reviews.filter(r => (r.overallRating || r.rating || 5) === starNum);
+    }
+    return reviews;
+  }, [reviews, selectedFilter]);
 
   return (
     <div className="space-y-6">
@@ -109,7 +138,7 @@ export default function ProductReviews({ productId }) {
                 <span className="w-3 text-gray-700 font-medium">{item.star}</span>
                 <span className="text-yellow-400 text-xs">★</span>
                 <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-red-500 rounded-full" style={{ width: item.percent }}></div>
+                  <div className="h-full bg-red-500 rounded-full transition-all duration-300" style={{ width: item.percent }}></div>
                 </div>
                 <span className="w-20 text-right text-gray-400 text-[11px]">{item.count}</span>
               </div>
@@ -165,13 +194,13 @@ export default function ProductReviews({ productId }) {
 
         <div className="divide-y divide-gray-100">
           {loading ? (
-            <div className="text-center py-6 text-xs text-gray-500">Đang tải đánh giá...</div>
-          ) : reviews.length === 0 ? (
-            <div className="text-center py-6 text-xs text-gray-500">Chưa có đánh giá nào cho sản phẩm này.</div>
+            <div className="text-center py-8 text-xs text-gray-500">Đang tải đánh giá...</div>
+          ) : filteredReviews.length === 0 ? (
+            <div className="text-center py-8 text-xs text-gray-500">Không tìm thấy đánh giá phù hợp với bộ lọc này.</div>
           ) : (
-            reviews.map((review) => {
+            filteredReviews.map((review) => {
               const ratingVal = review.overallRating || review.rating || 5;
-              const reviewName = review.orderDetailId.orderId.userId.name || "Khách hàng";
+              const reviewName = review.orderDetailId?.orderId?.userId?.name || review.userName || "Khách hàng";
               const reviewAvatarBg = review.avatarBg || "bg-red-700";
 
               return (
@@ -193,7 +222,6 @@ export default function ProductReviews({ productId }) {
                     </div>
                   </div>
 
-                  {/* Hiển thị tags trải nghiệm từ detailedRatings */}
                   <div className="flex flex-wrap gap-2">
                     {review.detailedRatings ? (
                       <>

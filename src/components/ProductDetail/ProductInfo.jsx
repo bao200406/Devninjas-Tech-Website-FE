@@ -1,13 +1,45 @@
-import { useState, useEffect, useMemo } from "react";
-import { Star, Heart, ArrowLeftRight, Truck, ShieldCheck, RefreshCw, ChevronDown, ChevronUp, Sliders } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Star, Heart, ArrowLeftRight, Truck, ShieldCheck, RefreshCw, ChevronDown, ChevronUp, Sliders, Check } from "lucide-react";
 import * as cartService from "../../services/cartService"; 
 import { useAuth } from "../../context/AuthContext";
+import { getRatingsByProduct } from "../../services/rating";
+import SafeImage from "../image/SafeImage";
+import { toast } from "react-toastify";
 
 export default function ProductInfo({ product, variants, onVariantChange }) {
+  console.log("ProductInfo render", { product, variants });
   const { user } = useAuth();
-  const variantList = variants?.data || [];
+  const variantList = useMemo(() => variants?.data || [], [variants]);
 
-  // 1. Tự động gom nhóm tất cả các thuộc tính có trong variant
+  // --- LẤY ĐÁNH GIÁ THỰC TẾ ---
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchReviews = async () => {
+      if (!product?._id) return;
+      try {
+        const data = await getRatingsByProduct(product._id);
+        if (isMounted) {
+          const reviewList = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : data?.reviews || [];
+          setReviews(reviewList);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải đánh giá:", error);
+      }
+    };
+    fetchReviews();
+    return () => { isMounted = false; };
+  }, [product?._id]);
+
+  const { totalReviews, averageRating } = useMemo(() => {
+    const total = reviews.length;
+    if (total === 0) return { totalReviews: 0, averageRating: "0.0" };
+    const sum = reviews.reduce((acc, r) => acc + (r.overallRating || r.rating || 5), 0);
+    return { totalReviews: total, averageRating: (sum / total).toFixed(1) };
+  }, [reviews]);
+
+  // 1. Gom nhóm thuộc tính
   const attributeGroups = useMemo(() => {
     const groups = new Map();
 
@@ -33,10 +65,11 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
     return result; 
   }, [variantList]);
 
-  // Phân loại thuộc tính: "Màu sắc" để riêng bên ngoài, các thuộc tính còn lại gom nhóm
-  const colorAttributeKey = Object.keys(attributeGroups).find(
-    (key) => key.toLowerCase().includes("màu") || key.toLowerCase().includes("color")
-  );
+  const colorAttributeKey = useMemo(() => {
+    return Object.keys(attributeGroups).find(
+      (key) => key.toLowerCase().includes("màu") || key.toLowerCase().includes("color")
+    );
+  }, [attributeGroups]);
 
   const otherAttributeGroups = useMemo(() => {
     const others = {};
@@ -48,16 +81,15 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
     return others;
   }, [attributeGroups, colorAttributeKey]);
 
-  // Điều kiện kiểm tra tổng số lượng nhóm thuộc tính (>= 3 thì gom nhóm cấu hình)
-  const totalAttributeCount = Object.keys(attributeGroups).length;
+  const totalAttributeCount = useMemo(() => Object.keys(attributeGroups).length, [attributeGroups]);
   const shouldCollapseOthers = totalAttributeCount >= 3;
 
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [isConfigOpen, setIsConfigOpen] = useState(false); // Trạng thái mở/đóng khung cấu hình
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
-  // Tự động chọn biến thể mặc định khi load
+  // Chọn biến thể mặc định
   useEffect(() => {
     if (variantList.length > 0 && !selectedVariant) {
       const defaultVariant = variantList.find(v => v.isDefault) || variantList[0];
@@ -74,9 +106,9 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
       });
       setSelectedAttributes(initialSelection);
     }
-  }, [variantList]);
+  }, [variantList, selectedVariant, onVariantChange]);
 
-  // Logic tìm biến thể dựa trên lựa chọn
+  // Tìm biến thể dựa trên lựa chọn thuộc tính
   useEffect(() => {
     if (variantList.length === 0 || Object.keys(selectedAttributes).length === 0) return;
 
@@ -89,27 +121,30 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
       });
     });
 
-    if (found) {
+    if (found && found !== selectedVariant) {
       setSelectedVariant(found);
       onVariantChange?.(found);
     }
-  }, [selectedAttributes, variantList, onVariantChange]);
+  }, [selectedAttributes, variantList, onVariantChange, selectedVariant]);
 
-  const handleAttributeSelect = (attrName, value) => {
-    setSelectedAttributes(prev => ({
-      ...prev,
-      [attrName]: value
-    }));
-  };
+  const handleAttributeSelect = useCallback((attrName, value) => {
+    setSelectedAttributes(prev => {
+      if (prev[attrName] === value) return prev;
+      return {
+        ...prev,
+        [attrName]: value
+      };
+    });
+  }, []);
 
   if (!product) return <div>Đang tải thông tin sản phẩm...</div>;
   if (!selectedVariant) return <div>Đang tải cấu hình...</div>;
 
-  const handleAddToCart = async () => {
+ const handleAddToCart = async () => {
     const isAvailable = selectedVariant && selectedVariant.stock > 0 && selectedVariant.isActive !== false;
     
     if (!isAvailable) {
-      alert("Sản phẩm này hiện đã hết hàng hoặc không khả dụng!");
+      toast.error("Sản phẩm này hiện đã hết hàng hoặc không khả dụng!");
       return;
     }
 
@@ -118,11 +153,15 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
       .join(" / ");
 
     if (user) {
+      // Hiển thị thông báo ngay lập tức để tạo cảm giác mượt mà, không bị khựng chờ mạng
+      toast.success("Thêm vào giỏ hàng thành công!");
+
       try {
         await cartService.addToCart(selectedVariant._id, quantity, product._id);
-        alert("Thêm vào giỏ hàng thành công!");
+        // (Tùy chọn) Gọi thêm hàm cập nhật lại số lượng giỏ hàng trên Header nếu có ở đây
       } catch (error) {
-        alert("Có lỗi xảy ra");
+        // Nếu lỗi mạng ngầm xảy ra thì mới báo lỗi cho người dùng biết
+        toast.error("Có lỗi xảy ra khi đồng bộ với máy chủ!");
       }
     } else {
       const cart = JSON.parse(localStorage.getItem("guestCart") || "[]");
@@ -130,7 +169,7 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
 
       const currentQtyInCart = idx > -1 ? cart[idx].quantity : 0;
       if (currentQtyInCart + quantity > selectedVariant.stock) {
-        alert(`Số lượng yêu cầu vượt quá tồn kho (Còn: ${selectedVariant.stock})`);
+        toast.warning(`Số lượng yêu cầu vượt quá tồn kho (Còn: ${selectedVariant.stock})`);
         return;
       }
 
@@ -151,7 +190,7 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
         });
       }
       localStorage.setItem("guestCart", JSON.stringify(cart));
-      alert("Đã thêm vào giỏ hàng!");
+      toast.success("Đã thêm vào giỏ hàng!");
     }
   };
 
@@ -163,11 +202,18 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
         </h1>
         <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
           <div className="flex text-amber-500 items-center gap-0.5">
-            {[...Array(5)].map((_, i) => <Star key={i} size={12} fill="currentColor" className="stroke-none" />)}
-            <span className="font-bold text-gray-900 ml-1">4.9</span>
+            {[...Array(5)].map((_, i) => (
+              <Star 
+                key={i} 
+                size={12} 
+                fill={i < Math.floor(Number(averageRating)) ? "currentColor" : "none"} 
+                className={i < Math.floor(Number(averageRating)) ? "stroke-none" : "text-gray-300"} 
+              />
+            ))}
+            <span className="font-bold text-gray-900 ml-1">{averageRating}</span>
           </div>
           <span className="text-gray-200">|</span>
-          <span>1.2k đánh giá</span>
+          <span>{totalReviews} đánh giá</span>
           <span className="text-gray-300">|</span>
           <span>Đã bán {product.soldCount || 0}</span>
         </div>
@@ -187,24 +233,69 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
         )}
       </div>
 
-      {/* 1. HIỂN THỊ THUỘC TÍNH MÀU SẮC Ở BÊN NGOÀI (NẾU CÓ) */}
+      {/* --- 1. HIỂN THỊ THUỘC TÍNH MÀU SẮC PHONG CÁCH CELLPHONES --- */}
       {colorAttributeKey && attributeGroups[colorAttributeKey] && (
         <div>
-          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">{colorAttributeKey}</h3>
-          <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-xs font-bold text-gray-900 mb-2">{colorAttributeKey}</h3>
+          <div className="flex flex-wrap items-center gap-3">
             {attributeGroups[colorAttributeKey].map((val) => {
               const isSelected = selectedAttributes[colorAttributeKey] === val;
+              
+              // 1. Tạo tập hợp thuộc tính tạm thời: Giữ nguyên các lựa chọn khác (như Dung lượng), chỉ đổi màu thành màu đang xét
+              const tempSelection = {
+                ...selectedAttributes,
+                [colorAttributeKey]: val
+              };
+
+              // 2. Tìm variant khớp hoàn toàn với CẢ MÀU ĐANG XÉT + CÁC THUỘC TÍNH KHÁC ĐANG CHỌN (như Dung lượng)
+              const matchingVariant = variantList.find((v) => {
+                return Object.entries(tempSelection).every(([attrName, selectedValue]) => {
+                  return v.attributes?.some(
+                    (a) => a.attributeValueId?.attributeId?.name === attrName && 
+                          a.attributeValueId?.value === selectedValue
+                  );
+                });
+              });
+              
+              // 3. Lấy ảnh và giá chính xác của biến thể kết hợp đó
+              const variantImage = matchingVariant?.image || product.image || "";
+              const variantPrice = matchingVariant ? matchingVariant.price : selectedVariant.price;
+
               return (
                 <button
                   key={val}
+                  type="button"
                   onClick={() => handleAttributeSelect(colorAttributeKey, val)}
-                  className={`px-4 py-2 text-xs font-medium rounded-lg border transition-all ${
+                  className={`relative flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all w-[180px] ${
                     isSelected 
-                      ? "bg-[#005ba4] text-white border-[#005ba4]" 
-                      : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                      ? "border-[#005ba4] bg-white ring-1 ring-[#005ba4] shadow-sm" 
+                      : "border-gray-200 bg-white hover:border-gray-300"
                   }`}
                 >
-                  {val}
+                  {/* Hình ảnh biến thể màu sắc */}
+                  {variantImage && (
+                    <SafeImage 
+                      src={variantImage} 
+                      alt={val} 
+                      className="w-9 h-9 object-contain rounded-md" 
+                      fallbackSrc="https://via.placeholder.com/150"
+                    />
+                  )}
+
+                  {/* Tên màu và Giá tiền tự động thay đổi theo dung lượng */}
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-xs font-bold text-gray-900 truncate">{val}</span>
+                    <span className="text-xs font-semibold text-[#005ba4] mt-0.5">
+                      {variantPrice.toLocaleString()}đ
+                    </span>
+                  </div>
+
+                  {/* Dấu tích ở góc trên bên phải khi được chọn */}
+                  {isSelected && (
+                    <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#005ba4] rounded-full flex items-center justify-center text-white shadow-sm">
+                      <Check size={12} strokeWidth={3} />
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -214,7 +305,6 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
 
       {/* 2. LOGIC HIỂN THỊ CÁC THUỘC TÍNH CÒN LẠI */}
       {shouldCollapseOthers ? (
-        /* GIAO DIỆN GOM NHÓM (DÀNH CHO >= 3 THUỘC TÍNH NHƯ LAPTOP) */
         <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-4">
           <div 
             onClick={() => setIsConfigOpen(!isConfigOpen)}
@@ -232,26 +322,33 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
             </button>
           </div>
 
-          {/* Nội dung thu gọn / mở rộng */}
           {isConfigOpen && (
             <div className="space-y-4 pt-3 border-t border-gray-200 animate-in fade-in duration-200">
               {Object.entries(otherAttributeGroups).map(([attrName, values]) => (
                 <div key={attrName}>
                   <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">{attrName}</h3>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-3">
                     {values.map((val) => {
                       const isSelected = selectedAttributes[attrName] === val;
                       return (
                         <button
                           key={val}
+                          type="button"
                           onClick={() => handleAttributeSelect(attrName, val)}
-                          className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${
+                          className={`relative px-5 py-2.5 rounded-xl border text-center transition-all min-w-[110px] ${
                             isSelected 
-                              ? "bg-[#005ba4] text-white border-[#005ba4]" 
-                              : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                              ? "border-[#005ba4] bg-white ring-1 ring-[#005ba4] shadow-sm text-[#005ba4] font-bold" 
+                              : "border-gray-200 bg-white hover:border-gray-300 text-gray-800 font-medium"
                           }`}
                         >
-                          {val}
+                          <span className="text-xs">{val}</span>
+
+                          {/* Dấu tích ở góc trên bên phải khi được chọn */}
+                          {isSelected && (
+                            <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#005ba4] rounded-full flex items-center justify-center text-white shadow-sm">
+                              <Check size={12} strokeWidth={3} />
+                            </div>
+                          )}
                         </button>
                       );
                     })}
@@ -262,24 +359,31 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
           )}
         </div>
       ) : (
-        /* GIAO DIỆN BÌNH THƯỜNG (DÀNH CHO < 3 THUỘC TÍNH NHƯ ĐIỆN THOẠI) */
         Object.entries(otherAttributeGroups).map(([attrName, values]) => (
           <div key={attrName}>
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">{attrName}</h3>
-            <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-xs font-bold text-gray-900 mb-2">{attrName}</h3>
+            <div className="flex flex-wrap items-center gap-3">
               {values.map((val) => {
                 const isSelected = selectedAttributes[attrName] === val;
                 return (
                   <button
                     key={val}
+                    type="button"
                     onClick={() => handleAttributeSelect(attrName, val)}
-                    className={`px-4 py-2 text-xs font-medium rounded-lg border transition-all ${
+                    className={`relative px-5 py-2.5 rounded-xl border text-center transition-all min-w-[110px] ${
                       isSelected 
-                        ? "bg-[#005ba4] text-white border-[#005ba4]" 
-                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                        ? "border-[#005ba4] bg-white ring-1 ring-[#005ba4] shadow-sm text-[#005ba4] font-bold" 
+                        : "border-gray-200 bg-white hover:border-gray-300 text-gray-800 font-medium"
                     }`}
                   >
-                    {val}
+                    <span className="text-xs">{val}</span>
+
+                    {/* Dấu tích ở góc trên bên phải khi được chọn */}
+                    {isSelected && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#005ba4] rounded-full flex items-center justify-center text-white shadow-sm">
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                    )}
                   </button>
                 );
               })}
