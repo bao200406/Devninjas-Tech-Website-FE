@@ -89,7 +89,7 @@ export default function ProductDetailPage({ params }) {
         </section>
 
         <section className="w-full border-t border-gray-200/70 pt-8 mb-6">
-          <RelatedProducts />
+          <RelatedProducts productId={id} />
         </section>
       </div>
     </div>

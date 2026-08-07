@@ -159,3 +159,28 @@ export const getProductsByCategory = async (categoryId, page = 1, limit = 8, fil
     throw error;
   }
 };
+
+export const getRelatedProducts = async (productId, options = {}) => {
+  try {
+    const url = `${API_URL}/api/products/${productId}/related`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      ...options, // Cho phép nhận AbortSignal để hủy request khi unmount hoặc đổi ID
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.message || "Lỗi từ phía server");
+    }
+
+    return result.data;
+  } catch (error) {
+    if (error.name !== 'AbortError') {
+      throw error;
+    }
+  }
+};

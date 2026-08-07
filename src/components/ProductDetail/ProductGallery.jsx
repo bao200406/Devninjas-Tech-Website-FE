@@ -1,16 +1,27 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-// Hàm helper để chuyển đổi đường dẫn cục bộ thành URL công khai
+// Hàm helper cập nhật xử lý URL chuẩn xác với cấu trúc backend của bạn
 const getPublicUrl = (path) => {
   if (!path) return "";
   if (path.startsWith("http")) return path;
 
-  const index = path.indexOf('uploads');
-  if (index === -1) return path;
-  
-  const relativePath = path.substring(index).replace(/\\/g, '/');
-  return `https://devninjas-tech-website-be.onrender.com/${relativePath}`;
+  const cleanPath = path.replace(/\\/g, '/');
+
+  // Nếu đường dẫn đã có sẵn chữ uploads
+  if (cleanPath.includes('uploads')) {
+    const index = cleanPath.indexOf('uploads');
+    const relativePath = cleanPath.substring(index);
+    return `https://devninjas-tech-website-be.onrender.com/${relativePath}`;
+  }
+
+  // Nếu đường dẫn có chứa thư mục con (ví dụ: products/filename.jpg)
+  if (cleanPath.startsWith('products/')) {
+    return `https://devninjas-tech-website-be.onrender.com/uploads/${cleanPath}`;
+  }
+
+  // Nếu backend chỉ trả về tên file thuần túy (ví dụ: products-1785150897541-852043014.jpg)
+  return `https://devninjas-tech-website-be.onrender.com/uploads/products/${cleanPath}`;
 };
 
 export default function ProductGallery({ variants, selectedVariant }) {
