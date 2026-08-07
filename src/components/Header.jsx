@@ -1,4 +1,4 @@
-import { Search, User, Heart, Bell, ShoppingCart, Moon, Menu, LayoutGrid } from "lucide-react";
+import { Search, User, GitCompare, Bell, ShoppingCart, Moon, Menu, LayoutGrid } from "lucide-react";
 import UserSection from "@/components/ui/UserSection";
 import Link from 'next/link';
 import Logo from "./logo/Logo";
@@ -45,7 +45,7 @@ export default function Header() {
         {/* Icons */}
         <div className="flex items-center gap-2 text-gray-600">
           {[
-            { icon: Heart, label: "Wishlist", hidden: "hidden sm:block" },
+            { icon: GitCompare, label: "Compare", hidden: "hidden sm:block", href: "/compare" }, // Đã đổi sang GitCompare
             { icon: Bell, label: "Notifications", badge: "3", color: "bg-red-500" },
             { icon: ShoppingCart, label: "Cart", badge: "2", color: "bg-blue-600", href: "/cart" },
           ].map((item, index) => (

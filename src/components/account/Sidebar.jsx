@@ -2,22 +2,21 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { User, MapPin, Package, Settings, Heart } from 'lucide-react';
+import Logo from '../logo/Logo';
 
 const Sidebar = ({ user }) => {
   const pathname = usePathname(); // Hook này giúp tự động lấy đường dẫn hiện tại
 
   const menuItems = [
     { icon: User, label: "Personal Info", href: "/account" },
-    { icon: MapPin, label: "Addresses", href: "/addresses" },
+    // { icon: MapPin, label: "Addresses", href: "/addresses" },
     { icon: Package, label: "Order History", href: "/orderHistory" },
-    { icon: Heart, label: "Wishlist", href: "/wishlist" }
+    // { icon: Heart, label: "Wishlist", href: "/wishlist" }
   ];
 
   return (
-    <aside className="w-64 bg-white p-6 rounded-2xl shadow-sm h-fit">
-      <h1 className="text-xl font-bold text-blue-900 mb-8 flex items-center gap-2">
-        <Package className="fill-blue-900"/> Azure Logic
-      </h1>
+    <aside className="w-72 bg-white p-6 rounded-2xl shadow-sm h-fit">
+      <Logo />
       
       {/* User Info */}
       <div className="flex items-center gap-4 mb-8 p-3 rounded-2xl bg-gray-50 border border-gray-100">
