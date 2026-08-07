@@ -1,10 +1,23 @@
+"use client";
+
 import { Search, User, Heart, Bell, ShoppingCart, Moon, Menu, LayoutGrid } from "lucide-react";
 import UserSection from "@/components/ui/UserSection";
 import Link from 'next/link';
 import Logo from "./logo/Logo";
+import { useEffect, useState } from "react";
+import { getAllCategories } from "@/services/categoryService";
 
 export default function Header() {
-  const menuItems = ["ĐIỆN THOẠI", "LAPTOP", "PHỤ KIỆN", "AUDIO", "GAMING", "ĐỒNG HỒ"];
+  const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+      const fetchCategories = async () => {
+        const data = await getAllCategories();
+        setCategories(data);
+      };
+
+      fetchCategories();
+    }, []);
 
   return (
     <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
@@ -23,9 +36,13 @@ export default function Header() {
             
             {/* Dropdown Menu */}
             <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-              {menuItems.map((item) => (
-                <Link key={item} href={`/${item.toLowerCase()}`} className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 first:rounded-t-xl last:rounded-b-xl">
-                  {item}
+              {categories.map((category) => (
+                <Link
+                  key={category._id}
+                  href={`/products/category/${category.slug}`}
+                  className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 first:rounded-t-xl last:rounded-b-xl"
+                >
+                  {category.name}
                 </Link>
               ))}
             </div>

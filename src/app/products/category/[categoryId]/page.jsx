@@ -1,13 +1,15 @@
 "use client";
-import { useState, useEffect, use } from "react"; 
+import { useState, useEffect, use } from "react";
 import FilterSidebar from "../../../../components/CategoryProductCard/FilterSidebar";
 import CategoryProductCard from "../../../../components/CategoryProductCard/ProductList";
 import Pagination from "../../../../components/ui/Pagination";
 import { X, ChevronDown, LayoutGrid, List, Filter } from "lucide-react"; 
-import { getProductsByCategory } from "../../../../services/productService"; // Đảm bảo import đúng đường dẫn service của bạn
+import { getProductsByCategory, getCategoryFilters } from "../../../../services/productService"; // Đảm bảo import đúng đường dẫn service của bạn
 import ProductCard from "../../../../components/ui/ProductCard";
 
 export default function ProductsPage({ params }) {
+  const { categoryId } = use(params);
+
   // State quản lý trạng thái sidebar trên mobile
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -21,19 +23,27 @@ export default function ProductsPage({ params }) {
   const [products, setProducts] = useState([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  // Lấy categoryId từ params (giả sử cấu trúc thư mục là category/[categoryId])
-  const { categoryId } = use(params);
+  const [categoryFilters, setCategoryFilters] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getProductsByCategory(categoryId);
-        setProducts(data.products);
-        setTotalProducts(data.totalProducts);
+
+        // gọi song song 2 API
+        const [productData, filterData] = await Promise.all([
+          getProductsByCategory(categoryId),
+          getCategoryFilters(categoryId),
+        ]);
+
+        setProducts(productData.products);
+        setTotalProducts(productData.totalProducts);
+
+        // lưu filter
+        setCategoryFilters(filterData);
+
       } catch (error) {
-        console.error("Lỗi khi tải sản phẩm:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -60,7 +70,7 @@ export default function ProductsPage({ params }) {
     const data = await getProductsByCategory(categoryId, 1, 8, resetFilters);
     setProducts(data.products);
   };
-
+  console.log(products);
   return (
     <div className="bg-app-bg min-h-screen p-4 md:p-8">
 
@@ -88,15 +98,16 @@ export default function ProductsPage({ params }) {
 
         {/* Sidebar: Ẩn trên mobile để tối ưu không gian, hiện trên lg */}
         <div className="hidden lg:block w-80 flex-shrink-0">
-           <FilterSidebar 
-            categoryId={categoryId}           // <--- Truyền thêm prop này
-            isOpen={isFilterOpen} 
-            onClose={() => setIsFilterOpen(false)}
-            filters={filters} 
-            setFilters={setFilters} 
-            onApply={handleApplyFilter} 
-            onReset={handleResetFilter}
-          />
+           <FilterSidebar
+              categoryId={categoryId}
+              categoryFilters={categoryFilters}
+              isOpen={isFilterOpen}
+              onClose={() => setIsFilterOpen(false)}
+              filters={filters}
+              setFilters={setFilters}
+              onApply={handleApplyFilter}
+              onReset={handleResetFilter}
+            />
         </div>
         
         {/* Lớp Overlay cho mobile khi sidebar mở */}
@@ -106,10 +117,11 @@ export default function ProductsPage({ params }) {
         
         {/* Sidebar di động */}
         <div className="lg:hidden">
-          <FilterSidebar 
-            categoryId={categoryId}         // <--- Truyền thêm prop này
-            isOpen={isFilterOpen} 
-            onClose={() => setIsFilterOpen(false)} 
+          <FilterSidebar
+            categoryId={categoryId}
+            categoryFilters={categoryFilters}
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
             filters={filters}
             setFilters={setFilters}
             onApply={handleApplyFilter}
@@ -160,22 +172,27 @@ export default function ProductsPage({ params }) {
 
             {/* Grid sản phẩm */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {loading ? (
+              {loading ? (
                 <p className="text-gray-500">Đang tải sản phẩm...</p>
-            ) : (
-                products.map((product) => (
-                    <ProductCard // Bây giờ dùng chung 1 component ProductCard
-                     key={product._id}
-                      id={product._id}
-                      name={product.name} // Đảm bảo product có trường name
-                      price={product.basePrice} // Chỉ truyền số, không truyền chuỗi
-                      rating={5}
-                      soldCount={product.soldCount}
-                      tag="MỚI"
-                      image={product.image}
-                    />
-                ))
-            )}
+              ) : (
+                products.map((product) => {
+                    console.log("PRODUCT =", product);
+                    console.log(product);
+
+
+                    return (
+                        <ProductCard
+                            key={product._id}
+                            id={product._id}
+                            name={product.name}
+                            price={product.basePrice}
+                            soldCount={product.soldCount}
+                            image={product.image}
+                            tag="MỚI"
+                        />
+                    );
+                })
+              )}
             </div>
 
             {/* Phân trang */}
