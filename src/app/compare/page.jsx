@@ -4,6 +4,8 @@ import { getAllProducts } from '../../services/productService';
 import { compareProductsWithAI } from '../../services/aiCompareProductService';
 import { toast } from 'react-toastify';
 import SafeImage from '../../components/image/SafeImage';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const ProductComparePage = () => {
   // 1. States quản lý dữ liệu
@@ -85,7 +87,10 @@ const ProductComparePage = () => {
       const productIds = [product1._id, product2._id];
       const res = await compareProductsWithAI(productIds, userNeed);
       
-      setAiResult(res.data);
+      // Hỗ trợ hứng kết quả linh hoạt theo dạng res.data hoặc res trực tiếp từ service
+      const analysisData = res.data?.analysis || res.analysis || res.data;
+      setAiResult(analysisData);
+      
       toast.success("AI đã hoàn tất phân tích!");
     } catch (error) {
       console.error(error);
@@ -95,11 +100,11 @@ const ProductComparePage = () => {
     }
   };
 
-  // Helper lấy giá sản phẩm chuẩn xác (đọc từ basePrice, không còn hiện "Liên hệ")
+  // Helper lấy giá sản phẩm chuẩn xác
   const getProductPrice = (product) => {
     const rawPrice = product?.basePrice || product?.price || product?.variants?.[0]?.price;
     if (rawPrice) return rawPrice.toLocaleString() + 'đ';
-    return '0đ';
+    return 'Liên hệ';
   };
 
   return (
@@ -220,18 +225,92 @@ const ProductComparePage = () => {
             </button>
           </div>
 
-          {/* Kết quả phân tích từ AI */}
-          {aiResult && (
-            <div className="mt-6 p-6 bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border border-indigo-100 rounded-2xl space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">💡</span>
-                <h3 className="font-bold text-indigo-950 text-base">Báo cáo tư vấn chuyên sâu từ chuyên gia AI:</h3>
+          {/* KẾT QUẢ PHÂN TÍCH TỪ AI (Bao gồm Tổng quan, Bảng Markdown so sánh & Lời khuyên) */}
+          {/* KẾT QUẢ PHÂN TÍCH TỪ AI */}
+          `{aiResult && (
+            <div className="mt-6 p-8 bg-white border border-indigo-100 rounded-3xl shadow-sm space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-4">
+                <span className="text-2xl">💡</span>
+                <h3 className="font-bold text-gray-900 text-lg">Báo cáo tư vấn chuyên sâu từ chuyên gia AI:</h3>
               </div>
-              <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-line pl-2">
-                {aiResult.analysis}
+              
+              <div className="prose prose-indigo max-w-none text-gray-700 leading-relaxed text-sm">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // Custom thẻ table
+                    table: ({ node, ...props }) => (
+                      <div className="overflow-x-auto my-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <table className="w-full text-left border-collapse" {...props} />
+                      </div>
+                    ),
+                    // Custom thẻ thead (Tiêu đề bảng)
+                    thead: ({ node, ...props }) => (
+                      <thead className="bg-gray-100 text-gray-800 font-bold uppercase text-xs tracking-wider" {...props} />
+                    ),
+                    // Custom thẻ th (Ô tiêu đề)
+                    th: ({ node, ...props }) => (
+                      <th className="p-4 border-b border-gray-200 text-gray-700" {...props} />
+                    ),
+                    // Custom thẻ td (Ô dữ liệu)
+                    td: ({ node, ...props }) => (
+                      <td className="p-4 border-b border-gray-200 text-gray-700 hover:bg-gray-50 transition" {...props} />
+                    ),
+                    // Custom thẻ tr (Dòng)
+                    tr: ({ node, ...props }) => (
+                      <tr className="border-last-none" {...props} />
+                    )
+                  }}
+                >
+                  {aiResult}
+                </ReactMarkdown>
               </div>
             </div>
-          )}
+          )}`
+        </div>
+      )}
+
+      {/* TẦNG DƯỚI CÙNG: HIỂN THỊ TRỰC TIẾP 2 THẺ SẢN PHẨM ĐỂ XEM/MUA NGAY */}
+      {product1 && product2 && (
+        <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+          <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+            <span>🛍️</span> Sản phẩm tham gia so sánh
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Thẻ sản phẩm 1 */}
+            <div className="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50 hover:shadow-md transition">
+              <div className="w-20 h-20 rounded-xl overflow-hidden bg-white p-2 border flex items-center justify-center flex-shrink-0">
+                <SafeImage src={product1.image} alt={product1.name} className="w-full h-full object-contain" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-sm text-gray-900 truncate">{product1.name}</h4>
+                <p className="text-red-600 font-bold text-sm mt-1">{getProductPrice(product1)}</p>
+                <a 
+                  href={`/products/${product1._id}`} 
+                  className="inline-block mt-2 text-xs bg-indigo-600 text-white font-semibold px-3 py-1.5 rounded-xl hover:bg-indigo-700 transition"
+                >
+                  Xem chi tiết →
+                </a>
+              </div>
+            </div>
+
+            {/* Thẻ sản phẩm 2 */}
+            <div className="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50 hover:shadow-md transition">
+              <div className="w-20 h-20 rounded-xl overflow-hidden bg-white p-2 border flex items-center justify-center flex-shrink-0">
+                <SafeImage src={product2.image} alt={product2.name} className="w-full h-full object-contain" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-sm text-gray-900 truncate">{product2.name}</h4>
+                <p className="text-red-600 font-bold text-sm mt-1">{getProductPrice(product2)}</p>
+                <a 
+                  href={`/products/${product2._id}`} 
+                  className="inline-block mt-2 text-xs bg-indigo-600 text-white font-semibold px-3 py-1.5 rounded-xl hover:bg-indigo-700 transition"
+                >
+                  Xem chi tiết →
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
