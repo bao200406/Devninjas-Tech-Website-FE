@@ -39,8 +39,71 @@ useEffect(() => {
   loadVouchers();
 }, []);
 
-  const [vouchers, setVouchers] = useState([]);
+const [vouchers, setVouchers] = useState([]);
+const totalVouchers = vouchers.length;
 
+const activeVouchers = vouchers.filter(
+  (v) =>
+    v.isActive &&
+    new Date(v.startDate) <= new Date() &&
+    new Date(v.endDate) >= new Date()
+).length;
+
+const totalUsed = vouchers.reduce(
+  (sum, v) => sum + (v.usedCount || 0),
+  0
+);
+
+const expiringSoon = vouchers.filter((v) => {
+  const today = new Date();
+  const end = new Date(v.endDate);
+
+  const diff =
+    (end.getTime() - today.getTime()) /
+    (1000 * 60 * 60 * 24);
+  return diff >= 0 && diff <= 7;
+}).length;
+
+  const filteredVouchers = vouchers.filter((item) => {
+  return (
+    item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+});
+const displayVouchers = filteredVouchers.filter((item) => {
+  const now = new Date();
+
+  switch (activeTab) {
+    case "Active":
+      return (
+        item.isActive &&
+        new Date(item.startDate) <= now &&
+        new Date(item.endDate) >= now
+      );
+
+    case "Scheduled":
+      return new Date(item.startDate) > now;
+
+    case "Expiring": {
+  const end = new Date(item.endDate);
+  const diff =
+    (end.getTime() - now.getTime()) /
+    (1000 * 60 * 60 * 24);
+
+  return (
+    item.isActive &&
+    diff >= 0 &&
+    diff <= 7
+  );
+  }
+    
+    case "Expired":
+      return new Date(item.endDate) < now;
+
+    default:
+      return true;
+  }
+});
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-8 text-slate-800 font-sans">
@@ -59,19 +122,15 @@ useEffect(() => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm">
-            <Download className="w-4 h-4 text-slate-500" />
-            <span>Xuất Excel</span>
-          </button>
-            <Link 
-            href="/admin2/vouchers/addVouchers"
-            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-slate-900/10"
-            >
-            <Plus className="w-4 h-4" />
-            <span>Tạo Voucher mới</span>
-            </Link>
-        </div>
+      <div className="flex items-center">
+        <Link
+          href="/admin2/vouchers/addVouchers"
+          className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-slate-900/10"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Tạo Voucher mới</span>
+        </Link>
+      </div>
       </div>
 
       {/* 2. Top Metric Cards (Thống kê tổng quan) */}
@@ -79,7 +138,7 @@ useEffect(() => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Voucher</p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">24</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">{totalVouchers}</h3>
             <p className="text-xs text-emerald-600 font-medium mt-1">↑ +4 tháng này</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
@@ -90,7 +149,7 @@ useEffect(() => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Đang hoạt động</p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">12</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">{activeVouchers}</h3>
             <p className="text-xs text-slate-400 mt-1">Đang áp dụng</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
@@ -101,7 +160,7 @@ useEffect(() => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Lượt sử dụng</p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">1,335</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">{totalUsed.toLocaleString()}</h3>
             <p className="text-xs text-emerald-600 font-medium mt-1">↑ 12% so với tháng trước</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
@@ -112,7 +171,7 @@ useEffect(() => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sắp hết hạn</p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">3</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">{expiringSoon}</h3>
             <p className="text-xs text-amber-600 font-medium mt-1">Trong 7 ngày tới</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
@@ -129,7 +188,7 @@ useEffect(() => {
           
           {/* Filter Tabs */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-            {['All', 'Active', 'Scheduled', 'Expired'].map((tab) => (
+            {['All', 'Active', 'Scheduled', 'Expiring', 'Expired'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -139,7 +198,7 @@ useEffect(() => {
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                {tab === 'All' ? 'Tất cả' : tab === 'Active' ? 'Hoạt động' : tab === 'Scheduled' ? 'Lên lịch' : 'Đã hết hạn'}
+                {tab === 'All' ? 'Tất cả' : tab === 'Active' ? 'Hoạt động' : tab === 'Scheduled' ? 'Lên lịch' :   tab === 'Expiring' ? 'Sắp hết hạn'  : 'Đã hết hạn'}
               </button>
             ))}
           </div>
@@ -182,8 +241,15 @@ useEffect(() => {
                 <th className="py-4 px-5 text-right"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {vouchers.map((item) => {
+<tbody className="divide-y divide-slate-100 text-xs">
+{displayVouchers.length === 0 ? (
+  <tr>
+    <td colSpan={8} className="text-center py-10 text-slate-500">
+      Không tìm thấy voucher.
+    </td>
+  </tr>
+) : (
+  displayVouchers.map((item) => {
                 const usagePercent =
                 item.usageLimit === 0
                     ? 0
@@ -280,14 +346,15 @@ useEffect(() => {
                     </td>
                   </tr>
                 );
-              })}
+              })
+            )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination Footer */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <div>Hiển thị <b>1 - 4</b> trong tổng số <b>24</b> voucher</div>
+          <div>Hiển thị <b>1 - {displayVouchers.length}</b> trong tổng số <b>{vouchers.length}</b> voucher</div>
           <div className="flex items-center gap-2">
             <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-all">
               <ChevronLeft className="w-4 h-4" />
