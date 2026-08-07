@@ -16,6 +16,7 @@ import {
   Layers,
   ChevronDown,
   Ticket,
+  Tags,
   LogOut,
 } from "lucide-react";
 
@@ -71,7 +72,7 @@ const handleLogout = async () => {
         },
         { name: "Customers", icon: Users, href: "/admin2/users" },
         { name: "Voucher", icon: Ticket, href: "/admin2/vouchers" },
-        { name: "Category", icon: Ticket, href: "/admin2/categories" },
+        { name: "Category", icon: Tags, href: "/admin2/categories" },
         { name: "Invoices", icon: FileText, href: "admin2/invoices" },
       ],
     },
