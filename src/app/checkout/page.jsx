@@ -94,19 +94,30 @@ export default function CheckoutPage() {
     const newAddress = response.data;
 
 if (newAddress.isDefault) {
-  setAddresses((prev) =>
-    prev.map((addr) => ({
+  setAddresses((prev) => [
+    ...prev.map((addr) => ({
       ...addr,
       isDefault: false,
-    })).concat(newAddress)
-  );
+    })),
+    newAddress,
+  ]);
 } else {
   setAddresses((prev) => [...prev, newAddress]);
 }
 
-    setSelectedAddress(newAddress);
+setSelectedAddress(newAddress);
 
-    setUseAnotherAddress(false);
+setFormData({
+  receiverName: newAddress.fullname,
+  receiverPhone: newAddress.phone,
+  receiverEmail: userInfo?.email || "",
+  province: newAddress.province,
+  district: newAddress.district,
+  ward: newAddress.ward,
+  address: newAddress.detail,
+});
+
+setUseAnotherAddress(false);
   } catch (err) {
     console.log(err);
     alert("Không thể lưu địa chỉ");
@@ -508,200 +519,215 @@ setSelectedAddress(defaultAddress);
                       ×
                     </button>
 
-                    <h2 className="mb-6 text-xl font-semibold text-gray-800">
-                      Thêm địa chỉ mới
-                    </h2>
+<h2 className="mb-6 text-3xl font-bold text-gray-900">
+  Thêm địa chỉ
+</h2>
 
-                    <div className="space-y-4">
-                      <div>
-                        <label className="mb-2 block text-sm text-gray-600">
-                          HỌ VÀ TÊN
-                        </label>
+<div className="space-y-5">
 
-                        <input
-                          type="text"
-                          name="receiverName"
-                          value={formData.receiverName}
-                          onChange={handleChange}
-                          placeholder="Nguyễn Văn A"
-                          className="w-full rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none focus:border-[#005BAC]"
-                        />
-                      </div>
+  {/* Tỉnh */}
+  <div>
+    <label className="mb-2 block text-xs font-semibold uppercase text-gray-500">
+      Tỉnh/Thành phố
+    </label>
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div>
-                          <label className="mb-2 block text-sm text-gray-600">
-                            SỐ ĐIỆN THOẠI
-                          </label>
+    <select
+      name="province"
+      value={formData.province}
+      onChange={async (e) => {
+        const province = e.target.value;
 
-                          <input
-                            type="text"
-                            name="receiverPhone"
-                            value={formData.receiverPhone}
-                            onChange={handleChange}
-                            placeholder="0901 234 567"
-                            className="w-full rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none focus:border-[#005BAC]"
-                          />
-                        </div>
+        const data = await fetchAddressData();
 
-                        <div>
-                          <label className="mb-2 block text-sm text-gray-600">
-                            EMAIL
-                          </label>
+        const selectedProvince = data.find(
+          (p) => p.name === province
+        );
 
-                          <input
-                            type="email"
-                            name="receiverEmail"
-                            value={formData.receiverEmail}
-                            onChange={handleChange}
-                            placeholder="example@azurelogic.vn"
-                            className="w-full rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none focus:border-[#005BAC]"
-                          />
-                        </div>
-                      </div>
+        setFormData({
+          ...formData,
+          province,
+          district: "",
+          ward: "",
+        });
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <select
-                          name="province"
-                          value={formData.province}
-                          onChange={async (e) => {
-                            const province = e.target.value;
+        setDistricts(selectedProvince?.districts || []);
+        setWards([]);
+      }}
+      className="
+h-12
+w-full
+rounded-xl
+border
+border-gray-200
+bg-gray-50
+px-4
+pr-10
+text-sm
+text-gray-700
+outline-none
+appearance-none
+bg-[position:right_14px_center]
+bg-[length:14px]
+bg-no-repeat
+focus:border-[#005BAC]
+"
+style={{
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23BFC5CF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+}}
+    >
+      <option value="">Chọn Tỉnh/Thành phố</option>
 
-                            const data = await fetchAddressData();
+      {provinces.map((item) => (
+        <option key={item.code} value={item.name}>
+          {item.name}
+        </option>
+      ))}
+    </select>
+  </div>
 
-                            const selectedProvince = data.find(
-                              (p) => p.name === province
-                            );
+  {/* Quận */}
+  <div>
+    <label className="mb-2 block text-xs font-semibold uppercase text-gray-500">
+      Quận/Huyện
+    </label>
 
-                            setFormData({
-                              ...formData,
-                              province,
-                              district: "",
-                              ward: "",
-                            });
+    <select
+      name="district"
+      value={formData.district}
+      onChange={(e) => {
+        const district = e.target.value;
 
-                            setDistricts(selectedProvince?.districts || []);
-                            setWards([]);
-                          }}
-                          className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none"
-                        >
-                          <option value="">Chọn tỉnh/thành</option>
+        const selectedDistrict = districts.find(
+          (item) => item.name === district
+        );
 
-                          {provinces.map((item) => (
-                            <option key={item.code} value={item.name}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </select>
+        setFormData({
+          ...formData,
+          district,
+          ward: "",
+        });
 
-                        <select
-                          name="district"
-                          value={formData.district}
-                          onChange={(e) => {
-                            const district = e.target.value;
+        setWards(selectedDistrict?.wards || []);
+      }}
+className="
+h-12
+w-full
+rounded-xl
+border
+border-gray-200
+bg-gray-50
+px-4
+pr-10
+text-sm
+text-gray-700
+outline-none
+appearance-none
+bg-[position:right_14px_center]
+bg-[length:14px]
+bg-no-repeat
+focus:border-[#005BAC]
+"
+style={{
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23BFC5CF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+}}
+    >
+      <option value="">Chọn Quận/Huyện</option>
 
-                            const selectedDistrict = districts.find(
-                              (item) => item.name === district
-                            );
+      {districts.map((item) => (
+        <option key={item.code} value={item.name}>
+          {item.name}
+        </option>
+      ))}
+    </select>
+  </div>
 
-                            setFormData({
-                              ...formData,
-                              district,
-                              ward: "",
-                            });
+  {/* Phường */}
+  <div>
+    <label className="mb-2 block text-xs font-semibold uppercase text-gray-500">
+      Phường/Xã
+    </label>
 
-                            setWards(selectedDistrict?.wards || []);
-                          }}
-                          className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none focus:border-[#005BAC]"
-                        >
-                          <option value="">Chọn quận/huyện</option>
+    <select
+      name="ward"
+      value={formData.ward}
+      onChange={handleChange}
+className="
+h-12
+w-full
+rounded-xl
+border
+border-gray-200
+bg-gray-50
+px-4
+pr-10
+text-sm
+text-gray-700
+outline-none
+appearance-none
+bg-[position:right_14px_center]
+bg-[length:14px]
+bg-no-repeat
+focus:border-[#005BAC]
+"
+style={{
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23BFC5CF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+}}
+    >
+      <option value="">Chọn Phường/Xã</option>
 
-                          {districts.map((item) => (
-                            <option key={item.code} value={item.name}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </select>
+      {wards.map((item) => (
+        <option key={item.code} value={item.name}>
+          {item.name}
+        </option>
+      ))}
+    </select>
+  </div>
 
-                        <select
-                          name="ward"
-                          value={formData.ward}
-                          onChange={handleChange}
-                          className="rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none"
-                        >
-                          <option value="">Chọn phường/xã</option>
+  {/* Địa chỉ */}
+  <div>
+    <label className="mb-2 block text-xs font-semibold uppercase text-gray-500">
+      Địa chỉ nhà
+    </label>
 
-                          {wards.map((item) => (
-                            <option key={item.code} value={item.name}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+    <input
+      type="text"
+      name="address"
+      value={formData.address}
+      onChange={handleChange}
+      placeholder="Nhập địa chỉ nhà (số nhà, tên đường...)"
+      className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm outline-none focus:border-[#005BAC]"
+    />
+  </div>
+  {showDefaultOption && (
+    <div className="flex items-center justify-between border-t pt-4">
+      <span className="text-sm text-gray-700">
+        Đặt làm địa chỉ mặc định
+      </span>
 
-                      <div>
-                        <label className="mb-2 block text-sm text-gray-600">
-                          ĐỊA CHỈ CỤ THỂ
-                        </label>
+      <input
+        type="checkbox"
+        checked={setAsDefault}
+        onChange={(e) => setSetAsDefault(e.target.checked)}
+        className="h-5 w-5 accent-[#005BAC]"
+      />
+    </div>
+  )}
 
-                        <input
-                          type="text"
-                          name="address"
-                          value={formData.address}
-                          onChange={handleChange}
-                          placeholder="Số nhà, tên đường..."
-                          className="w-full rounded-lg border border-gray-300 bg-[#f5f5f7] px-4 py-3 outline-none focus:border-[#005BAC]"
-                        />
+</div>
 
-                        {showDefaultOption && (
-                          <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3">
-                            <label className="flex cursor-pointer items-start gap-3">
-                              <input
-                                type="checkbox"
-                                checked={setAsDefault}
-                                onChange={(e) => setSetAsDefault(e.target.checked)}
-                                className="mt-1 h-4 w-4 accent-[#005BAC]"
-                              />
-
-                              <div>
-                                <p className="text-sm font-medium text-gray-700">
-                                  {hasDefaultAddress
-                                    ? "Đặt địa chỉ này làm địa chỉ mặc định"
-                                    : "Đây sẽ là địa chỉ mặc định của bạn"}
-                                </p>
-
-                                <p className="mt-1 text-xs text-gray-500">
-                                  {hasDefaultAddress
-                                    ? "Địa chỉ mặc định hiện tại sẽ được thay thế."
-                                    : "Bạn có thể thay đổi địa chỉ mặc định bất kỳ lúc nào."}
-                                </p>
-                              </div>
-                            </label>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex justify-end gap-3 pt-4">
-                        <button
-                          type="button"
-                          onClick={() => setUseAnotherAddress(false)}
-                          className="rounded-lg border border-gray-300 px-5 py-2 hover:bg-gray-100"
-                        >
-                          Hủy
-                        </button>
+ <div className="flex justify-end gap-3 pt-4">
 
 <button
   type="button"
   onClick={handleSaveAddress}
-  className="rounded-lg bg-[#005BAC] px-5 py-2 text-white hover:bg-[#004b91]"
+  className="w-full rounded-xl bg-[#005BAC] py-3 text-white font-semibold hover:bg-[#004b91]"
 >
   Xác nhận
 </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+              )}  
               </div>
 
               {/* Shipping */}
