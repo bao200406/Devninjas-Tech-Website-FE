@@ -52,7 +52,7 @@ export default function FilterSidebar({
 
   console.log("Dữ liệu categoryFilters:", categoryFilters);
 
-  console.log(filters);
+  console.log(filters.minPrice, filters.maxPrice);
 
   return (
     <>
@@ -86,10 +86,10 @@ export default function FilterSidebar({
                 type="radio"
                 name="price"
                 className="w-5 h-5 cursor-pointer accent-blue-600"
-                checked={
-                  filters.minPrice === item.min &&
-                  filters.maxPrice === item.max
-                }
+                // checked={
+                //   filters.minPrice === item.min &&
+                //   filters.maxPrice === item.max
+                // }
                 onChange={() => handlePriceChange(item.min, item.max)}
               />
               <span>{item.label}</span>
