@@ -1,46 +1,79 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Sidebar from '../../components/account/Sidebar';
 import { useAuth } from "../../context/AuthContext";
 import ChangePasswordModal from '../../components/account/ChangePasswordModal'; 
 import UpdateProfileModal from '../../components/modals/UpdateProfileModal';
 import AddAddressModal from '../../components/modals/addAddressModal';
-import EditAddressModal from '../../components/modals/EditAddressModal'; // <-- 1. Import Modal Cập nhật địa chỉ
-import { getAddresses } from "../../services/addressService"; // Import hàm lấy danh sách địa chỉ
+import EditAddressModal from '../../components/modals/EditAddressModal'; 
+import ConfirmDeleteAddressDialog from '../../components/dialog/ConfirmDeleteAddressDialog'; // Import Dialog xóa
+import { getAddresses, deleteAddress } from "../../services/addressService"; 
+import { toast } from "react-toastify";
 
 const AccountInfoPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   
   // State quản lý Modal Cập nhật địa chỉ và địa chỉ đang chọn để sửa
   const [isEditAddressModalOpen, setIsEditAddressModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
+
+  // State quản lý Modal Xác nhận xóa địa chỉ (Tối ưu trải nghiệm)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [addressToDeleteId, setAddressToDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   
   // State lưu danh sách địa chỉ của user
   const [addressList, setAddressList] = useState([]);
   const [loadingAddress, setLoadingAddress] = useState(false);
 
-  const { user, setUser } = useAuth(); // Lấy trực tiếp user từ AuthContext
+  const { user, setUser } = useAuth(); 
 
-  // Hàm gọi API lấy danh sách địa chỉ
-  const fetchUserAddresses = async () => {
+  // Tối ưu hóa hàm fetch bằng useCallback để tránh render dư thừa
+  const fetchUserAddresses = useCallback(async () => {
     try {
       setLoadingAddress(true);
       const res = await getAddresses();
-      // Tùy thuộc vào cấu trúc trả về của backend (res.data hoặc res), gán dữ liệu cho phù hợp
       setAddressList(res.data || res || []);
     } catch (error) {
       console.error("Lỗi khi tải danh sách địa chỉ:", error);
+      toast.error("Không thể tải danh sách địa chỉ!");
     } finally {
       setLoadingAddress(false);
     }
-  };
+  }, []);
 
   // Gọi API lấy địa chỉ khi vừa vào trang
   useEffect(() => {
     fetchUserAddresses();
-  }, []);
+  }, [fetchUserAddresses]);
+
+  // Mở Dialog xác nhận xóa
+  const handleOpenDeleteModal = (addressId) => {
+    setAddressToDeleteId(addressId);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Xử lý xóa địa chỉ thực tế khi người dùng bấm đồng ý trên Dialog
+  const handleConfirmDelete = async () => {
+    if (!addressToDeleteId) return;
+    try {
+      setDeleting(true);
+      await deleteAddress(addressToDeleteId);
+      // Cập nhật lại state trực tiếp để giao diện mượt mà, không cần reload trang
+      setAddressList(prev => prev.filter(addr => addr._id !== addressToDeleteId));
+      toast.success("Đã xóa địa chỉ thành công!");
+      setIsDeleteModalOpen(false);
+      setAddressToDeleteId(null);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Không thể xóa địa chỉ!";
+      toast.error(errorMessage);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Format ngày sinh từ dạng Date của MongoDB sang DD/MM/YYYY
   const formatBirthday = (dateString) => {
@@ -57,8 +90,17 @@ const AccountInfoPage = () => {
     return '-';
   };
 
+  // Tối ưu hiệu năng: Sử dụng useMemo để tránh việc sắp xếp và cắt mảng lại mỗi khi component re-render
+  const sortedAddresses = useMemo(() => {
+    return [...addressList].sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+  }, [addressList]);
+
+  const defaultVisible = useMemo(() => sortedAddresses.slice(0, 4), [sortedAddresses]);
+  const hiddenAddresses = useMemo(() => sortedAddresses.slice(4), [sortedAddresses]);
+  const hiddenCount = hiddenAddresses.length;
+
   // Lọc ra địa chỉ mặc định từ danh sách addressList để hiển thị ở thông tin cá nhân
-  const defaultAddressObj = addressList.find(addr => addr.isDefault);
+  const defaultAddressObj = useMemo(() => addressList.find(addr => addr.isDefault), [addressList]);
   const defaultAddressString = defaultAddressObj 
     ? `${defaultAddressObj.detail}, ${defaultAddressObj.ward}, ${defaultAddressObj.district}, ${defaultAddressObj.province}`
     : (user?.address || '-');
@@ -131,10 +173,12 @@ const AccountInfoPage = () => {
         {/* Khối 2: Sổ địa chỉ */}
         <section className="bg-white p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Sổ địa chỉ</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              Sổ địa chỉ <span className="text-sm font-normal text-gray-500">({addressList.length})</span>
+            </h2>
             <button 
               onClick={() => setIsAddressModalOpen(true)}
-              className="text-red-500 text-sm font-medium hover:underline cursor-pointer"
+              className="text-red-500 text-sm font-medium hover:underline cursor-pointer transition-colors"
             >
               + Thêm địa chỉ
             </button>
@@ -143,47 +187,134 @@ const AccountInfoPage = () => {
           {loadingAddress ? (
             <div className="py-8 text-center text-sm text-gray-400">Đang tải danh sách địa chỉ...</div>
           ) : addressList.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4">
-              {addressList.map((addr, index) => (
-                <div key={addr._id || index} className="p-4 border border-gray-200 rounded-xl flex flex-col justify-between space-y-3 bg-white shadow-xs">
-                  <div>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-800">{addr.addressName || 'Địa chỉ'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-semibold">
-                          {addr.addressType === 'home' ? 'Nhà' : 'Văn phòng'}
-                        </span>
-                        {addr.isDefault && (
-                          <span className="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded text-[10px] font-semibold">
-                            Mặc định
+            <div className="space-y-4">
+              {/* 4 địa chỉ đầu tiên luôn hiển thị */}
+              <div className="grid grid-cols-2 gap-4">
+                {defaultVisible.map((addr, index) => (
+                  <div key={addr._id || index} className="p-4 border border-gray-200 rounded-xl flex flex-col justify-between space-y-3 bg-white shadow-xs hover:shadow-md transition-shadow">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-800">{addr.addressName || 'Địa chỉ'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-semibold">
+                            {addr.addressType === 'home' ? 'Nhà' : 'Văn phòng'}
                           </span>
+                          {addr.isDefault && (
+                            <span className="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded text-[10px] font-semibold">
+                              Mặc định
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-700 mt-2 font-medium">
+                        {user?.name || 'User'} <span className="text-gray-300 mx-1">|</span> {user?.phone || 'Chưa có SĐT'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                        {addr.detail}, {addr.ward}, {addr.district}, {addr.province}
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end gap-4 text-xs font-medium pt-2 border-t border-gray-100">
+                      {!addr.isDefault && (
+                        <button 
+                          onClick={() => handleOpenDeleteModal(addr._id)}
+                          className="text-gray-500 hover:text-red-500 cursor-pointer transition-colors"
+                        >
+                          Xóa
+                        </button>
+                      )}
+                      
+                      <button 
+                        onClick={() => {
+                          setSelectedAddress(addr);
+                          setIsEditAddressModalOpen(true);
+                        }}
+                        className="text-blue-600 hover:underline cursor-pointer"
+                      >
+                        Cập nhật
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Các địa chỉ ẩn phía sau với hiệu ứng trượt mượt mà (Tailwind transition) */}
+              {hiddenCount > 0 && (
+                <div 
+                  className={`grid grid-cols-2 gap-4 transition-all duration-300 ease-in-out ${
+                    showAll 
+                      ? "opacity-100 max-h-[1000px]" 
+                      : "opacity-0 max-h-0 overflow-hidden pointer-events-none"
+                  }`}
+                >
+                  {hiddenAddresses.map((addr, index) => (
+                    <div key={addr._id || index} className="p-4 border border-gray-200 rounded-xl flex flex-col justify-between space-y-3 bg-white shadow-xs hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-800">{addr.addressName || 'Địa chỉ'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-semibold">
+                              {addr.addressType === 'home' ? 'Nhà' : 'Văn phòng'}
+                            </span>
+                            {addr.isDefault && (
+                              <span className="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded text-[10px] font-semibold">
+                                Mặc định
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700 mt-2 font-medium">
+                          {user?.name || 'User'} <span className="text-gray-300 mx-1">|</span> {user?.phone || 'Chưa có SĐT'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                          {addr.detail}, {addr.ward}, {addr.district}, {addr.province}
+                        </p>
+                      </div>
+
+                      <div className="flex justify-end gap-4 text-xs font-medium pt-2 border-t border-gray-100">
+                        {!addr.isDefault && (
+                          <button 
+                            onClick={() => handleOpenDeleteModal(addr._id)}
+                            className="text-gray-500 hover:text-red-500 cursor-pointer transition-colors"
+                          >
+                            Xóa
+                          </button>
                         )}
+                        
+                        <button 
+                          onClick={() => {
+                            setSelectedAddress(addr);
+                            setIsEditAddressModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:underline cursor-pointer"
+                        >
+                          Cập nhật
+                        </button>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 mt-2 font-medium">
-                      {user?.name || 'User'} <span className="text-gray-300 mx-1">|</span> {user?.phone || 'Chưa có SĐT'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                      {addr.detail}, {addr.ward}, {addr.district}, {addr.province}
-                    </p>
-                  </div>
-                  <div className="flex justify-end gap-4 text-xs font-medium pt-2 border-t border-gray-100">
-                    <button className="text-gray-500 hover:text-red-500 transition-colors">Xóa</button>
-                    {/* 2. Gắn sự kiện click mở modal sửa và truyền đúng dữ liệu của địa chỉ đó vào */}
-                    <button 
-                      onClick={() => {
-                        setSelectedAddress(addr);
-                        setIsEditAddressModalOpen(true);
-                      }}
-                      className="text-blue-600 hover:underline cursor-pointer"
-                    >
-                      Cập nhật
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Nút Xem thêm / Thu gọn hiện đại */}
+              {addressList.length > 4 && (
+                <div className="mt-5 text-center">
+                  <button
+                    onClick={() => setShowAll(!showAll)}
+                    className="px-6 py-2.5 text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                  >
+                    {showAll ? (
+                      <>Thu gọn <span className="transform rotate-180 transition-transform duration-300">▼</span></>
+                    ) : (
+                      <>Xem thêm {hiddenCount} địa chỉ khác <span className="transition-transform duration-300">▼</span></>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-gray-400">
@@ -257,7 +388,7 @@ const AccountInfoPage = () => {
         existingAddresses={addressList}
       />
 
-      {/* 3. Modal Cập nhật địa chỉ */}
+      {/* Modal Cập nhật địa chỉ */}
       <EditAddressModal 
         isOpen={isEditAddressModalOpen}
         onClose={() => {
@@ -267,6 +398,14 @@ const AccountInfoPage = () => {
         addressData={selectedAddress}
         existingAddresses={addressList}
         onAddressUpdated={fetchUserAddresses}
+      />
+
+      {/* Dialog xác nhận xóa địa chỉ riêng biệt */}
+      <ConfirmDeleteAddressDialog 
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
       />
     </div>
   );

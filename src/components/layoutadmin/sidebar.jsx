@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation"; // Import hook để lấy đường dẫn
+import { usePathname, useRouter } from "next/navigation"; // Import hook để lấy đường dẫn
+import { logoutUser } from "../../services/authService";
 import Link from "next/link"; // Import Link để chuyển trang
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,12 +15,14 @@ import {
   PieChart,
   Layers,
   ChevronDown,
-  Settings,
   Ticket,
+  Tags,
+  LogOut,
 } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname(); // Lấy đường dẫn hiện tại
+  const router = useRouter();
   // Quản lý menu đang mở
   const [openMenus, setOpenMenus] = useState({ Products: true });
 
@@ -30,16 +33,27 @@ export default function Sidebar() {
     }));
   };
 
+const handleLogout = async () => {
+  try {
+    await logoutUser();
+  } catch (err) {
+    console.error(err);
+  } finally {
+    localStorage.clear();
+    sessionStorage.clear();
+    router.replace("/login");
+  }
+};
   const menuGroups = [
     {
       title: "OVERVIEW",
       items: [
         { name: "Dashboard", icon: LayoutDashboard, href: "/admin2/dashboard" },
-        { name: "Analytics", icon: BarChart3, href: "/admin2/analytics" },
-        { name: "eCommerce", icon: ShoppingCart, href: "admin2/ecommerce" },
-        { name: "CRM", icon: Users, href: "/admin2/crm" },
-        { name: "SaaS", icon: Layers, href: "/admin2/saas" },
-        { name: "Charts", icon: PieChart, href: "/admin2/charts" },
+        // { name: "Analytics", icon: BarChart3, href: "/admin2/analytics" },
+        // { name: "eCommerce", icon: ShoppingCart, href: "admin2/ecommerce" },
+        // { name: "CRM", icon: Users, href: "/admin2/crm" },
+        // { name: "SaaS", icon: Layers, href: "/admin2/saas" },
+        // { name: "Charts", icon: PieChart, href: "/admin2/charts" },
       ],
     },
     {
@@ -58,6 +72,7 @@ export default function Sidebar() {
         },
         { name: "Customers", icon: Users, href: "/admin2/users" },
         { name: "Voucher", icon: Ticket, href: "/admin2/vouchers" },
+        { name: "Category", icon: Tags, href: "/admin2/categories" },
         { name: "Invoices", icon: FileText, href: "admin2/invoices" },
       ],
     },
@@ -177,19 +192,26 @@ export default function Sidebar() {
       </nav>
 
       {/* Profile Section */}
-      <div className="p-4 border-t border-slate-100 flex items-center gap-3 bg-slate-50/30">
-        <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-          AS
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-bold text-slate-900">Aigars S.</p>
-          <p className="text-xs text-slate-500">Admin</p>
-        </div>
-        <Settings
-          size={16}
-          className="text-slate-400 hover:text-slate-900 cursor-pointer transition-colors"
-        />
-      </div>
+<div className="p-4 border-t border-slate-100 flex items-center gap-3 bg-slate-50/30">
+  <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+    A
+  </div>
+
+  <div className="flex-1">
+    <p className="text-sm font-bold text-slate-900">Admin</p>
+  </div>
+
+  <button
+    onClick={handleLogout}
+    title="Đăng xuất"
+    className="p-2 rounded-lg hover:bg-red-50 transition"
+  >
+    <LogOut
+      size={18}
+      className="text-slate-400 hover:text-red-500"
+    />
+  </button>
+</div>
     </aside>
   );
 }

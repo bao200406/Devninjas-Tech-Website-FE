@@ -129,7 +129,7 @@ export default function ProductPage() {
           </p>
         </div>
         <Link
-          href="/admin2/products/addproduct"
+          href="/admin2/products/create"
           className="flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-all shadow-sm"
         >
           <Plus size={18} />

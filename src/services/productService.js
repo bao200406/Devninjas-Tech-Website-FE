@@ -173,7 +173,32 @@ export const getCategoryFilters = async (categoryId) => {
 
     return response.data.data;
   } catch (error) {
-    console.error(error);
+    console.error("Error getting category filters:", error);
     throw error;
+  }
+};
+
+export const getRelatedProducts = async (productId, options = {}) => {
+  try {
+    const url = `${API_URL}/api/products/${productId}/related`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      ...options,
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.message || "Lỗi từ phía server");
+    }
+
+    return result.data;
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      throw error;
+    }
   }
 };
