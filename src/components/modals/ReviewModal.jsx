@@ -37,7 +37,7 @@ export default function ReviewModal({ isOpen, onClose, orderDetailId, productInf
     const index = path.indexOf('uploads');
     if (index === -1) return path;
     const relativePath = path.substring(index).replace(/\\/g, '/');
-    return `https://devninjas-tech-website-be.onrender.com/${relativePath}`;
+    return `https://devninjas-tech-website-be-1.onrender.com/${relativePath}`;
   };
 
   // Hàm xử lý gửi đánh giá thật lên Backend

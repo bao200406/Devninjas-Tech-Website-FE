@@ -157,7 +157,7 @@ export default function ChatWidget() {
                               const cleanImgPath = imgPath.startsWith('/') ? imgPath.slice(1) : imgPath;
                               const cleanFolder = folderPrefix.endsWith('/') ? folderPrefix : `${folderPrefix}/`;
 
-                              return `https://devninjas-tech-website-be.onrender.com${cleanFolder}${cleanImgPath}`;
+                              return `https://devninjas-tech-website-be-1.onrender.com${cleanFolder}${cleanImgPath}`;
                             })()
                           } 
                           alt={prod.name} 

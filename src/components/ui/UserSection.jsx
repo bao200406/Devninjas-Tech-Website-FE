@@ -50,7 +50,7 @@ export default function UserSection() {
               src={
                 user.avatar.startsWith('http') 
                   ? user.avatar 
-                  : `https://devninjas-tech-website-be.onrender.com/uploads/users/${user.avatar}`
+                  : `https://devninjas-tech-website-be-1.onrender.com/uploads/users/${user.avatar}`
               } 
               alt={user?.name || 'User'} 
               className="w-full h-full object-cover"

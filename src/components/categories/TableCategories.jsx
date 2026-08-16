@@ -337,7 +337,7 @@ export default function TableCategories({ data }) {
 
                   <td className="p-4 ">
                     <img
-                      src={`https://devninjas-tech-website-be.onrender.com/uploads/categories/${item.image}`}
+                      src={`https://devninjas-tech-website-be-1.onrender.com/uploads/categories/${item.image}`}
                       alt=""
                       className="w-40 h-auto m-auto"
                     />

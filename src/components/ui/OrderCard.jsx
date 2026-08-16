@@ -14,7 +14,7 @@ const getPublicUrl = (path) => {
   if (index === -1) return path;
   
   const relativePath = path.substring(index).replace(/\\/g, '/');
-  return `https://devninjas-tech-website-be.onrender.com/${relativePath}`;
+  return `https://devninjas-tech-website-be-1.onrender.com/${relativePath}`;
 };
 
 export default function OrderCard({ order }) {
