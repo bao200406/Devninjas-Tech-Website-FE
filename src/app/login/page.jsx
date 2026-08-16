@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   FaEnvelope,
   FaLock,
@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { loginUser, googleLogin } from "../../services/authService"; // Đã import thêm googleLogin
 
-export default function LoginPage() {
+function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -200,5 +200,13 @@ export default function LoginPage() {
         </motion.p>
       </motion.div>
     </motion.div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f3f5fb] flex items-center justify-center"><FaSpinner className="animate-spin text-blue-700 text-3xl" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
