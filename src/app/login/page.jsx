@@ -1,24 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaEnvelope,
   FaLock,
   FaEye,
   FaEyeSlash,
-  FaSpinner, // Thêm icon spinner
+  FaSpinner,
 } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion"; // Thêm animation
-import { toast } from "react-toastify"; // Dùng toast thay alert
-import { loginUser } from "../../services/authService";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
+import { loginUser, googleLogin } from "../../services/authService"; // Đã import thêm googleLogin
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams(); // Dùng để bắt mã code từ Google trả về
 
   // Cấu hình Animation
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
@@ -29,7 +30,7 @@ export default function LoginPage() {
     setFormData((prev) => ({ ...prev, [name]: value.trim() }));
   };
 
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
@@ -42,7 +43,6 @@ export default function LoginPage() {
         throw new Error("Không nhận được phản hồi từ máy chủ");
       }
 
-      // Sửa đường dẫn lấy role dựa trên cấu trúc API: res.data.user.role
       const userRole = res.data?.user?.role;
       
       toast.update(loadingId, {
@@ -52,7 +52,6 @@ export default function LoginPage() {
         autoClose: 2000,
       });
 
-      // Điều hướng dựa trên role
       setTimeout(() => {
         if (userRole === "admin") {
           window.location.href = "/admin2/dashboard";
@@ -71,6 +70,59 @@ export default function LoginPage() {
     }
   };
 
+  // 1. Xử lý khi bấm nút Google: chuyển hướng sang trang đăng nhập của Google
+  const handleGoogleClick = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI;
+    
+   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=select_account`;
+    
+    window.location.href = googleAuthUrl;
+  };
+
+  // 2. Tự động bắt mã 'code' khi Google redirect ngược lại trang login này
+  useEffect(() => {
+    const code = searchParams.get('code');
+
+    if (code) {
+      const handleGoogleCallback = async () => {
+        const loadingId = toast.loading("Đang xử lý đăng nhập Google...");
+        try {
+          const res = await googleLogin(code);
+
+          if (!res) {
+            throw new Error("Không nhận được phản hồi từ máy chủ");
+          }
+
+          const userRole = res.data?.user?.role;
+
+          toast.update(loadingId, {
+            render: "Đăng nhập Google thành công!",
+            type: "success",
+            isLoading: false,
+            autoClose: 2000,
+          });
+
+          setTimeout(() => {
+            if (userRole === "admin") {
+              window.location.href = "/admin2/dashboard";
+            } else {
+              window.location.href = "/";
+            }
+          }, 1500);
+
+        } catch (err) {
+          toast.dismiss(loadingId);
+          const errorMessage = err.response?.data?.message || err.message || "Đăng nhập Google thất bại!";
+          toast.error(errorMessage);
+          // Xóa param code trên URL nếu muốn (tuỳ chọn) bằng cách replace state
+          router.replace('/login');
+        }
+      };
+
+      handleGoogleCallback();
+    }
+  }, [searchParams, router]);
 
   return (
     <motion.div 
@@ -131,7 +183,12 @@ export default function LoginPage() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="flex justify-center">
-          <button className="w-full border border-gray-300 rounded-xl py-4 flex items-center justify-center gap-3 hover:bg-gray-50 transition">
+          {/* Đã thêm sự kiện onClick vào nút Google */}
+          <button 
+            type="button" 
+            onClick={handleGoogleClick}
+            className="w-full border border-gray-300 rounded-xl py-4 flex items-center justify-center gap-3 hover:bg-gray-50 transition"
+          >
             <FcGoogle size={22} />
             <span className="font-medium text-gray-700">Google</span>
           </button>

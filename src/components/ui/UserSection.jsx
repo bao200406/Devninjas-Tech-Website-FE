@@ -45,14 +45,21 @@ export default function UserSection() {
         className="flex items-center gap-2 hover:bg-gray-50 p-1.5 pr-3 rounded-full transition-all border border-transparent hover:border-gray-200"
       >
         <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-xs shadow-md">
-          {user?.avatar ? (
+          {user?.avatar && user.avatar.trim() !== "" && user.avatar !== "undefined" && user.avatar !== "null" ? (
             <img 
-              src={`https://devninjas-tech-website-be.onrender.com/uploads/users/${user.avatar}`} 
-              alt={user?.name} 
+              src={
+                user.avatar.startsWith('http') 
+                  ? user.avatar 
+                  : `https://devninjas-tech-website-be.onrender.com/uploads/users/${user.avatar}`
+              } 
+              alt={user?.name || 'User'} 
               className="w-full h-full object-cover"
             />
           ) : (
-            user?.name?.charAt(0).toUpperCase() || 'U'
+            // Nếu không có avatar hợp lệ -> Hiển thị chữ cái đầu của tên (Ví dụ: 'B')
+            <span className="text-white font-bold text-sm">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </span>
           )}
         </div>
         <span className="text-sm font-semibold text-gray-700 hidden lg:block">{user.name?.split(' ')[0]}</span>
