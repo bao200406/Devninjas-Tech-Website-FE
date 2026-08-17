@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { getAddresses, createAddress } from "../../services/addressService";
 import { fetchAddressData } from "../api/addressAPI";
 import { getMe } from "../../services/authService";
