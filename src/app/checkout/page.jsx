@@ -1,12 +1,12 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
+
 
 import { getAddresses, createAddress } from "../../services/addressService";
 import { fetchAddressData } from "../api/addressAPI";
 import { getMe } from "../../services/authService";
 import Image from "next/image";
-import { useState , useEffect  } from "react";
+import { useState , useEffect, Suspense  } from "react";
 import { NotebookPen } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -37,7 +37,7 @@ const getPublicUrl = (path) => {
   return `https://devninjas-tech-website-be-1.onrender.com/${relativePath}`;
 };
 
-export default function CheckoutPage() {
+function CheckoutContent() {
  
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [cartItems, setCartItems] = useState([]);
@@ -1205,6 +1205,20 @@ style={{
           </form>
     </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen bg-[#f3f5fb] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }
 
