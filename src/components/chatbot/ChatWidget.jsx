@@ -17,7 +17,7 @@ export default function ChatWidget() {
 
   // Các câu hỏi gợi ý nhanh cho thương mại điện tử
   const quickSuggestions = [
-    "💻 Laptop gaming dưới 25 triệu",
+    "💻 Laptop gaming dưới 40 triệu",
     "📱 Điện thoại pin trâu giá rẻ",
     "🎧 Phụ kiện tai nghe, bàn phím"
   ];

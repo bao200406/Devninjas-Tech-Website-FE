@@ -4,6 +4,7 @@ import { ChevronDown, X, Search, Check } from 'lucide-react';
 import {fetchAddressData} from "../../app/api/addressAPI";
 import { createAddress } from "../../services/addressService";
 import ConfirmDefaultAddressDialog from '../dialog/addressDialog';
+import { toast } from "react-toastify";
 
 const AddAddressModal = ({ isOpen, onClose, onAddressAdded, existingAddresses = [] }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -97,7 +98,8 @@ const AddAddressModal = ({ isOpen, onClose, onAddressAdded, existingAddresses = 
   };
 
   // Hàm thực thi gọi API lưu địa chỉ thực tế sau khi đã xác nhận hoặc không vướng mặc định
-  const executeSaveAddress = async () => {
+// Hàm thực thi gọi API lưu địa chỉ thực tế sau khi đã xác nhận hoặc không vướng mặc định
+const executeSaveAddress = async () => {
     const mappedAddressType = formData.addressType === "Nhà" ? "home" : "office";
 
     const payload = {
@@ -109,15 +111,28 @@ const AddAddressModal = ({ isOpen, onClose, onAddressAdded, existingAddresses = 
       setLoading(true);
       const res = await createAddress(payload); 
       
-      if (onAddressAdded) {
-        onAddressAdded(res);
+      // Kiểm tra trạng thái success do Backend trả về
+      if (res && res.success) {
+        if (onAddressAdded) {
+          onAddressAdded(res.data);
+        }
+        toast.success("Thêm địa chỉ thành công!");
+        setShowConfirmDialog(false);
+        onClose();
+      } else {
+        // Lỗi nghiệp vụ (VD: thiếu phone) được xử lý mượt mà ở đây, KHÔNG bật bảng đỏ Next.js
+        const errMessage = res?.message || "Có lỗi xảy ra, vui lòng thử lại sau.";
+        
+        if (errMessage.toLowerCase().includes("phone") || errMessage.toLowerCase().includes("required")) {
+          toast.warning("Vui lòng cập nhật số điện thoại trong thông tin cá nhân!");
+        } else {
+          toast.error(errMessage);
+        }
       }
-      
-      setShowConfirmDialog(false);
-      onClose();
     } catch (error) {
-      console.error("Lỗi khi thêm địa chỉ:", error);
-      setErrorMessage(error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại sau.");
+      // Khối này chỉ chạy khi mất kết nối mạng hoàn toàn
+      console.error("Lỗi mạng:", error);
+      toast.error("Không thể kết nối đến máy chủ!");
     } finally {
       setLoading(false);
     }
@@ -133,7 +148,6 @@ const AddAddressModal = ({ isOpen, onClose, onAddressAdded, existingAddresses = 
       return;
     }
 
-    // Kiểm tra xem đã có địa chỉ mặc định nào trước đó chưa
     const hasExistingDefault = existingAddresses?.some(addr => addr.isDefault);
 
     if (formData.isDefault && hasExistingDefault) {
@@ -141,8 +155,6 @@ const AddAddressModal = ({ isOpen, onClose, onAddressAdded, existingAddresses = 
       return;
     }
 
-    // Map lại addressType sang giá trị tiếng Anh không dấu (hoặc tùy theo Backend của bạn yêu cầu)
-    // Ví dụ: "Nhà" -> "home", "Văn phòng" -> "office"
     const mappedAddressType = formData.addressType === "Nhà" ? "home" : "office";
 
     const payload = {
@@ -152,16 +164,26 @@ const AddAddressModal = ({ isOpen, onClose, onAddressAdded, existingAddresses = 
 
     try {
       setLoading(true);
-      const res = await createAddress(payload); // Gửi payload đã đổi type lên backend
+      const res = await createAddress(payload); 
       
-      if (onAddressAdded) {
-        onAddressAdded(res);
+      if (res && res.success) {
+        if (onAddressAdded) {
+          onAddressAdded(res.data);
+        }
+        toast.success("Thêm địa chỉ thành công!");
+        onClose();
+      } else {
+        const errMessage = res?.message || "Có lỗi xảy ra, vui lòng thử lại sau.";
+        
+        if (errMessage.toLowerCase().includes("phone") || errMessage.toLowerCase().includes("required")) {
+          toast.warning("Vui lòng cập nhật số điện thoại trong thông tin cá nhân!");
+        } else {
+          toast.error(errMessage);
+        }
       }
-      
-      onClose();
     } catch (error) {
-      console.error("Lỗi khi thêm địa chỉ:", error);
-      setErrorMessage(error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại sau.");
+      console.error("Lỗi mạng:", error);
+      toast.error("Không thể kết nối đến máy chủ!");
     } finally {
       setLoading(false);
     }

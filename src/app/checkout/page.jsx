@@ -6,7 +6,7 @@ import { getMe } from "../../services/authService";
 import Image from "next/image";
 import { useState , useEffect  } from "react";
 import { NotebookPen } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CreditCard,
   Landmark,
@@ -22,6 +22,7 @@ import * as orderService from "../../services/orderService";
 import {getCart} from "../../services/cartService";
 import { getAvailableVouchers, applyVoucher } from "../../services/voucherService";
 import { createStripePayment, createCODOrder } from "../../services/paymentService";
+import { toast } from "react-toastify";
 
 const getPublicUrl = (path) => {
   if (!path) return "/placeholder.png"; // Trả về ảnh mặc định nếu không có path
@@ -49,6 +50,8 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams.get("type") === "buynow";
 
     const [formData, setFormData] = useState({
       
@@ -120,24 +123,39 @@ setFormData({
 setUseAnotherAddress(false);
   } catch (err) {
     console.log(err);
-    alert("Không thể lưu địa chỉ");
+    toast.warning("Vui lòng cập nhật số điện thoại trong thông tin cá nhân!");
   }
 };
 
-    const fetchCart = async () => {
-      try {
-        const response = await getCart();
-
-        console.log(response);
-
-        setCartItems(response?.data?.items || []);
-      } catch (error) {
-           console.log("ERROR:", error.response?.data);
-      }
-    };
     useEffect(() => {
-      fetchCart();
-    }, []);
+      const loadCheckoutItems = async () => {
+        if (isBuyNow) {
+          // Luồng Mua Ngay: Đọc trực tiếp từ sessionStorage
+          try {
+            const rawItem = sessionStorage.getItem("buyNowItem");
+            if (rawItem) {
+              const parsedItem = JSON.parse(rawItem);
+              setCartItems([parsedItem]);
+            } else {
+              alert("Không tìm thấy thông tin sản phẩm mua ngay!");
+              router.push("/");
+            }
+          } catch (err) {
+            console.error("Lỗi đọc dữ liệu mua ngay:", err);
+          }
+        } else {
+          // Luồng Giỏ Hàng Thông Thường: Gọi API getCart cũ
+          try {
+            const response = await getCart();
+            setCartItems(response?.data?.items || []);
+          } catch (error) {
+            console.log("ERROR:", error.response?.data);
+          }
+        }
+      };
+
+      loadCheckoutItems();
+    }, [isBuyNow, router]);
 
     useEffect(() => {
       if (!appliedVoucher) {
@@ -282,6 +300,11 @@ setSelectedAddress(defaultAddress);
         const response = await orderService.updateOrder(orderId, orderData);
 
         if (response.success) {
+          // 👉 THÊM ĐOẠN NÀY VÀO ĐÂY: Dọn dẹp sessionStorage nếu là luồng mua ngay
+          if (isBuyNow) {
+            sessionStorage.removeItem("buyNowItem");
+          }
+
           // 2. Nếu chọn thanh toán bằng Stripe, gọi API tạo link thanh toán Stripe
           if (paymentMethod === "stripe") {
             const stripeRes = await createStripePayment({ orderId, totalPrice });

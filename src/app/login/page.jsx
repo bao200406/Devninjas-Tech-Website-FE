@@ -12,14 +12,15 @@ import { FcGoogle } from "react-icons/fc";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
-import { loginUser, googleLogin } from "../../services/authService"; // Đã import thêm googleLogin
+import { loginUser, googleLogin } from "../../services/authService";
+import Logo from "../../components/logo/Logo";
 
 function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams(); // Dùng để bắt mã code từ Google trả về
+  const searchParams = useSearchParams();
 
   // Cấu hình Animation
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
@@ -32,8 +33,20 @@ function LoginContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Kiểm tra không để trống
+    if (!formData.email || !formData.password) {
+      toast.error("Vui lòng nhập đầy đủ thông tin đăng nhập!");
+      return;
+    }
+
+    // 2. Kiểm tra mật khẩu tối thiểu (đồng bộ với backend nếu cần)
+    if (formData.password.length < 8) {
+      toast.error("Mật khẩu phải từ 8 ký tự trở lên!");
+      return;
+    }
+
     setLoading(true);
-    
     const loadingId = toast.loading("Đang xác thực...");
 
     try {
@@ -75,7 +88,7 @@ function LoginContent() {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI;
     
-   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=select_account`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=select_account`;
     
     window.location.href = googleAuthUrl;
   };
@@ -115,7 +128,6 @@ function LoginContent() {
           toast.dismiss(loadingId);
           const errorMessage = err.response?.data?.message || err.message || "Đăng nhập Google thất bại!";
           toast.error(errorMessage);
-          // Xóa param code trên URL nếu muốn (tuỳ chọn) bằng cách replace state
           router.replace('/login');
         }
       };
@@ -134,19 +146,19 @@ function LoginContent() {
         className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8"
       >
         <motion.div variants={itemVariants} className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-blue-700 rounded-md flex items-center justify-center text-white font-bold">A</div>
-          <h2 className="text-2xl font-bold text-blue-700">Azure Logic</h2>
+          <Logo />
         </motion.div>
 
         <motion.h1 variants={itemVariants} className="text-4xl font-bold text-gray-900 mb-2">Đăng nhập</motion.h1>
         <motion.p variants={itemVariants} className="text-gray-500 mb-8">Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng.</motion.p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Thêm noValidate để chặn popup lỗi mặc định của trình duyệt */}
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           <motion.div variants={itemVariants}>
             <label className="block text-sm font-semibold mb-2">EMAIL / SỐ ĐIỆN THOẠI</label>
             <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaEnvelope className="text-gray-400" />
-              <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="your@email.com" className="w-full bg-transparent px-3 py-4 outline-none" required />
+              <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="your@email.com" className="w-full bg-transparent px-3 py-4 outline-none" />
             </div>
           </motion.div>
 
@@ -154,7 +166,7 @@ function LoginContent() {
             <label className="block text-sm font-semibold mb-2">MẬT KHẨU</label>
             <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaLock className="text-gray-400" />
-              <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" required />
+              <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" />
               <button type="button" onClick={() => setShowPassword(!showPassword)}>
                 {showPassword ? <FaEyeSlash className="text-gray-500" /> : <FaEye className="text-gray-500" />}
               </button>
@@ -183,7 +195,6 @@ function LoginContent() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="flex justify-center">
-          {/* Đã thêm sự kiện onClick vào nút Google */}
           <button 
             type="button" 
             onClick={handleGoogleClick}

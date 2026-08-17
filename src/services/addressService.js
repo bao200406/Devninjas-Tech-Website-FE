@@ -8,9 +8,18 @@ export const getAddresses = async (params = {}) => {
 
 // 2. Thêm địa chỉ mới
 export const createAddress = async (addressData) => {
-  const response = await api.post("/addresses", addressData);
-  return response.data;
-};
+  try {
+    const response = await api.post("/addresses", addressData);
+    return response.data; // Thành công trả về data
+  } catch (error) {
+    // Nếu server có trả về message lỗi (ví dụ lỗi 400, 500 do thiếu phone)
+    if (error.response && error.response.data) {
+      return error.response.data; // Trả về object kiểu { success: false, message: "..." }
+    }
+    // Nếu là lỗi mất mạng hoàn toàn thì mới ném ra
+    throw error;
+  }
+}
 
 // 3. Cập nhật địa chỉ theo ID
 export const updateAddress = async (addressId, addressData) => {

@@ -194,6 +194,40 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
     }
   };
 
+  const handleBuyNow = () => {
+    const isAvailable = selectedVariant && selectedVariant.stock > 0 && selectedVariant.isActive !== false;
+    
+    if (!isAvailable) {
+      toast.error("Sản phẩm này hiện đã hết hàng hoặc không khả dụng!");
+      return;
+    }
+
+    const variantAttributes = selectedVariant.attributes
+      .map((a) => a.attributeValueId.value)
+      .join(" / ");
+
+    // Đóng gói thông tin sản phẩm mua ngay
+    const buyNowItem = {
+      variantId: selectedVariant._id,
+      productId: product._id,
+      quantity,
+      name: product.name,
+      price: selectedVariant.price,
+      image: selectedVariant.image,
+      variantName: variantAttributes,
+      stock: selectedVariant.stock,
+      isAvailable: true,
+      compareAtPrice: selectedVariant.compareAtPrice || null
+    };
+
+    // Lưu vào sessionStorage để trang checkout nhận diện độc lập
+    sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
+
+    // Chuyển hướng sang trang checkout kèm theo type=buynow
+    window.location.href = "/checkout?type=buynow"; 
+    // Hoặc nếu bạn dùng Next.js router thì dùng: router.push("/checkout?type=buynow");
+  };
+
   return (
     <div className="flex flex-col gap-5.5 w-full">
       <div>
@@ -417,7 +451,10 @@ export default function ProductInfo({ product, variants, onVariantChange }) {
         >
           THÊM VÀO GIỎ HÀNG
         </button>
-        <button className="flex-1 py-3 bg-[#005ba4] text-white text-xs font-bold rounded-md hover:bg-[#004b88] transition-colors shadow-sm">
+        <button 
+          onClick={handleBuyNow} // <-- Thêm sự kiện onClick vào đây
+          className="flex-1 py-3 bg-[#005ba4] text-white text-xs font-bold rounded-md hover:bg-[#004b88] transition-colors shadow-sm"
+        >
           MUA NGAY
         </button>
       </div>
