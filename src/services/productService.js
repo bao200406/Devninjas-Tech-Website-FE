@@ -63,41 +63,46 @@ export const updateProduct = async (id, formData) => {
   }
 };
 
-export const getProductById = async (Id) => {
+export const getProductById = async (id) => {
   try {
-    const url = `${API_URL}/api/products/${Id}`;
-    console.log(`[DEBUG] Đang gọi API: GET ${url}`);
+    if (!id || typeof id !== "string") {
+      throw new Error("ID sản phẩm không đúng định dạng");
+    }
+
+    // Log ID mà frontend nhận được
+    console.log("========== DEBUG PRODUCT ==========");
+    console.log("ID frontend gửi:", id);
+
+    const url = `${API_URL}/api/products/${id}`;
+    console.log("URL gọi:", url);
 
     const res = await fetch(url, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
 
-    // Log status code để biết server phản hồi ra sao (200, 400, 404, 500...)
-    console.log(`[DEBUG] Status code nhận được: ${res.status}`);
+    console.log("Status:", res.status);
 
     const result = await res.json();
-    
-    // Log toàn bộ dữ liệu trả về để kiểm tra cấu trúc (cực kỳ quan trọng để bắt lỗi undefined)
-    console.log("[DEBUG] Dữ liệu từ server:", result);
+
+    console.log("Response từ backend:", result);
 
     if (!res.ok) {
       throw new Error(result.message || "Lỗi từ phía server");
     }
 
-    // Kiểm tra xem trường data có tồn tại không trước khi return
-    if (result.data === undefined) {
-      console.warn("[DEBUG] Cảnh báo: 'result.data' bị undefined, hãy kiểm tra lại cấu trúc JSON ở backend!");
-    }
+    console.log("Product trả về:", result.data);
 
     return result.data;
   } catch (error) {
-    console.error("[DEBUG] Fetch API fail:", error);
+    console.error("Lỗi getProductById:", error);
     throw error;
   }
 };
 
-export const deleteProduct = async (Id) => {
+export const deleteProduct = async (id) => {
   try {
     const res = await fetch(`${API_URL}/api/products/${Id}`, {
       method: "DELETE",
@@ -160,6 +165,19 @@ export const getProductsByCategory = async (categoryId, page = 1, limit = 8, fil
   }
 };
 
+export const getCategoryFilters = async (categoryId) => {
+  try {
+    const response = await api.get(
+      `/products/category/${categoryId}/filters`
+    );
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error getting category filters:", error);
+    throw error;
+  }
+};
+
 export const getRelatedProducts = async (productId, options = {}) => {
   try {
     const url = `${API_URL}/api/products/${productId}/related`;
@@ -168,7 +186,7 @@ export const getRelatedProducts = async (productId, options = {}) => {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
-      ...options, // Cho phép nhận AbortSignal để hủy request khi unmount hoặc đổi ID
+      ...options,
     });
 
     const result = await res.json();
@@ -179,7 +197,7 @@ export const getRelatedProducts = async (productId, options = {}) => {
 
     return result.data;
   } catch (error) {
-    if (error.name !== 'AbortError') {
+    if (error.name !== "AbortError") {
       throw error;
     }
   }

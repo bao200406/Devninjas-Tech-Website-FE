@@ -4,10 +4,10 @@ import api from "../axios/api.js";
 export const getFiltersByCategory = async (categoryId) => {
   try {
     const response = await api.get(`/category-attributes/${categoryId}`);
-    return response.data; // Trả về { success: true, data: [...] }
+    return response?.data || { success: false, data: [] };
   } catch (error) {
     console.error("Lỗi khi gọi API getFiltersByCategory:", error);
-    throw error;
+    return { success: false, data: [] };
   }
 };
 

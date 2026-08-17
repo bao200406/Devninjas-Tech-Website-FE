@@ -43,7 +43,7 @@ export default function CategoryBar() {
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
           {categories.map((cat) => (
             <a 
-              href={`/products/category/${cat._id}`}
+              href={`/products/category/${cat.slug}`}
               key={cat._id}
               className="flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-lg transition-all duration-300 cursor-pointer group"
             >
