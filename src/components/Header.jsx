@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { getAllCategories } from "@/services/categoryService";
 
 export default function Header() {
+
   const [categories, setCategories] = useState([]);
 
     useEffect(() => {
@@ -19,6 +20,7 @@ export default function Header() {
 
       fetchCategories();
     }, []);
+
 
   return (
     <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
@@ -37,6 +39,7 @@ export default function Header() {
             
             {/* Dropdown Menu */}
             <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+
               {categories.map((category) => (
                 <Link
                   key={category._id}
@@ -44,6 +47,7 @@ export default function Header() {
                   className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 first:rounded-t-xl last:rounded-b-xl"
                 >
                   {category.name}
+
                 </Link>
               ))}
             </div>

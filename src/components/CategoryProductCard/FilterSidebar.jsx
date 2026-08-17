@@ -1,7 +1,7 @@
 "use client";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-// import { getFiltersByCategory } from "../../services/categoryAttributeService";
+import { getFiltersByCategory } from "../../services/categoryAttributeService";
 
 export default function FilterSidebar({
   categoryId,
@@ -30,15 +30,28 @@ export default function FilterSidebar({
   };
 
   // Gọi API lấy bộ lọc động theo categoryId và reset state filter khi đổi danh mục
-  // useEffect(() => {
-  //   if (categoryId) {
-  //     setFilters({ minPrice: null, maxPrice: null, attributeValueIds: [] });
+  useEffect(() => {
+    if (categoryId) {
+      setFilters({ minPrice: null, maxPrice: null, attributeValueIds: [] });
+      getFiltersByCategory(categoryId)
+        .then((res) => {
+          console.log("CATEGORY ID:", categoryId);
+          console.log("FILTER RESPONSE:", JSON.stringify(res, null, 2));
+          console.log("FILTER SUCCESS:", res?.success);
+          console.log("FILTER DATA:", res?.data);
 
-  //     getFiltersByCategory(categoryId).then((res) => {
-  //       if (res.success) setFilterGroups(res.data);
-  //     });
-  //   }
-  // }, [categoryId, setFilters]);
+          if (res.success) {
+            setFilterGroups(res.data);
+          }
+        })
+        .catch((error) => {
+          console.error("FILTER ERROR:", error);
+          console.error("FILTER RESPONSE ERROR:", error.response?.data);
+          console.error("FILTER STATUS:", error.response?.status);
+        });
+      }
+  }, [categoryId, setFilters]);
+
 
   const toggleAttribute = (id) => {
     setFilters(prev => {
