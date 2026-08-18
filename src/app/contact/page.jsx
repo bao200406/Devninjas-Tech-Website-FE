@@ -38,29 +38,32 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="bg-[#f5f6fb] min-h-screen">
+    <div className="bg-[#F8F9FA] min-h-screen">
 
       {/* HERO */}
       <section className="max-w-7xl mx-auto px-6 pt-20 pb-16 text-center">
 
-        <h1 className="text-7xl font-extrabold text-[#1b1f27] mb-6">
+        <h1 className="text-5xl md:text-7xl font-extrabold text-[#1b1f27] mb-6">
           Liên hệ với chúng tôi
         </h1>
 
         <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
           Chúng tôi luôn sẵn sàng hỗ trợ và giải đáp mọi thắc mắc của bạn.
-          Hãy kết nối để Azure Logic đồng hành cùng thành công của bạn.
+          Hãy kết nối để Devninjas đồng hành cùng thành công của bạn.
         </p>
 
         <div className="mt-16">
-          <p className="text-blue-700 font-semibold mb-3">
-            Azure Logic Support
+
+          <p className="text-[#0052A3] font-semibold mb-3">
+            Devninjas Support
           </p>
 
-          <h2 className="text-5xl font-bold text-[#1b1f27]">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#1b1f27]">
             Chúng tôi có thể giúp gì cho bạn?
           </h2>
+
         </div>
+
       </section>
 
       {/* STATS */}
@@ -68,8 +71,8 @@ export default function ContactPage() {
 
         <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6">
 
-          <div className="bg-white rounded-xl p-10 min-h-[190px]">
-            <h3 className="text-5xl font-bold text-blue-700 mb-4">
+          <div className="bg-white rounded-xl p-10 min-h-[190px] border border-gray-200">
+            <h3 className="text-5xl font-bold text-[#0052A3] mb-4">
               5-10'
             </h3>
 
@@ -82,8 +85,8 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-xl p-10 min-h-[190px]">
-            <h3 className="text-5xl font-bold text-blue-700 mb-4">
+          <div className="bg-white rounded-xl p-10 min-h-[190px] border border-gray-200">
+            <h3 className="text-5xl font-bold text-[#0052A3] mb-4">
               98%
             </h3>
 
@@ -96,8 +99,8 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-xl p-10 min-h-[190px]">
-            <h3 className="text-5xl font-bold text-blue-700 mb-4">
+          <div className="bg-white rounded-xl p-10 min-h-[190px] border border-gray-200">
+            <h3 className="text-5xl font-bold text-[#0052A3] mb-4">
               24/7
             </h3>
 
@@ -110,8 +113,8 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-xl p-10 min-h-[190px]">
-            <h3 className="text-5xl font-bold text-blue-700 mb-4">
+          <div className="bg-white rounded-xl p-10 min-h-[190px] border border-gray-200">
+            <h3 className="text-5xl font-bold text-[#0052A3] mb-4">
               100k+
             </h3>
 
@@ -120,11 +123,12 @@ export default function ContactPage() {
             </p>
 
             <p className="text-gray-600">
-              Tin tưởng sử dụng giải pháp của Azure Logic.
+              Tin tưởng sử dụng giải pháp của Devninjas
             </p>
           </div>
 
         </div>
+
       </section>
 
       {/* CONTACT */}
@@ -137,8 +141,9 @@ export default function ContactPage() {
 
             <div className="space-y-5">
 
-              <div className="bg-white rounded-xl p-6 flex gap-5">
-                <div className="w-14 h-14 bg-blue-700 rounded-lg flex items-center justify-center">
+              {/* HOTLINE */}
+              <div className="bg-white rounded-xl p-6 flex gap-5 border border-gray-200">
+                <div className="w-14 h-14 bg-[#0052A3] rounded-lg flex items-center justify-center">
                   <FaPhoneAlt className="text-white" />
                 </div>
 
@@ -151,15 +156,16 @@ export default function ContactPage() {
                     1900 8888 99 (Miễn phí)
                   </p>
 
-                  <p className="text-blue-700 font-bold mt-4">
+                  <p className="text-[#0052A3] font-bold mt-4">
                     GHI NGAY
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl p-6 flex gap-5">
-                <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FaEnvelope className="text-blue-700" />
+              {/* EMAIL */}
+              <div className="bg-white rounded-xl p-6 flex gap-5 border border-gray-200">
+                <div className="w-14 h-14 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <FaEnvelope className="text-[#0052A3]" />
                 </div>
 
                 <div>
@@ -168,18 +174,19 @@ export default function ContactPage() {
                   </h4>
 
                   <p className="text-lg text-gray-600">
-                    support@azurelogic.vn
+                    support@devninjaslogic.vn
                   </p>
 
-                  <p className="text-blue-700 font-bold mt-4">
+                  <p className="text-[#0052A3] font-bold mt-4">
                     GỬI EMAIL
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl p-6 flex gap-5">
+              {/* ADDRESS */}
+              <div className="bg-white rounded-xl p-6 flex gap-5 border border-gray-200">
                 <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <FaMapMarkerAlt />
+                  <FaMapMarkerAlt className="text-[#0052A3]" />
                 </div>
 
                 <div>
@@ -192,14 +199,16 @@ export default function ContactPage() {
                     TP. Hồ Chí Minh
                   </p>
 
-                  <p className="text-blue-700 font-bold mt-4">
+                  <p className="text-[#0052A3] font-bold mt-4">
                     XEM BẢN ĐỒ
                   </p>
                 </div>
               </div>
-                            <div className="bg-white rounded-xl p-6 flex gap-5">
-                <div className="w-14 h-14 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <FaClock />
+
+              {/* WORKING TIME */}
+              <div className="bg-white rounded-xl p-6 flex gap-5 border border-gray-200">
+                <div className="w-14 h-14 bg-orange-50 rounded-lg flex items-center justify-center">
+                  <FaClock className="text-[#0052A3]" />
                 </div>
 
                 <div>
@@ -216,38 +225,54 @@ export default function ContactPage() {
                   </p>
                 </div>
               </div>
+
             </div>
 
+            {/* SUPPORT CHANNEL */}
             <div className="mt-12">
+
               <p className="text-sm tracking-[5px] text-gray-600 mb-5">
                 KÊNH HỖ TRỢ NHANH
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <button className="bg-white px-5 py-3 rounded-lg shadow-sm">
+
+                <button
+                  type="button"
+                  className="bg-white px-5 py-3 rounded-lg shadow-sm border border-gray-200 hover:border-[#0052A3] hover:text-[#0052A3] transition"
+                >
                   Chat trực tuyến
                 </button>
 
-                <button className="bg-white px-5 py-3 rounded-lg shadow-sm flex items-center gap-2">
+                <button
+                  type="button"
+                  className="bg-white px-5 py-3 rounded-lg shadow-sm border border-gray-200 flex items-center gap-2 hover:border-[#0052A3] hover:text-[#0052A3] transition"
+                >
                   <FaFacebookMessenger />
                   Messenger
                 </button>
 
-                <button className="bg-white px-5 py-3 rounded-lg shadow-sm">
+                <button
+                  type="button"
+                  className="bg-white px-5 py-3 rounded-lg shadow-sm border border-gray-200 hover:border-[#0052A3] hover:text-[#0052A3] transition"
+                >
                   Zalo Official
                 </button>
+
               </div>
+
             </div>
 
           </div>
 
-          {/* RIGHT */}
-          <div className="bg-white rounded-xl p-10 shadow-sm">
+          {/* RIGHT - FORM */}
+          <div className="bg-white rounded-xl p-10 shadow-sm border border-gray-200">
 
             <form className="space-y-6">
 
               <div className="grid md:grid-cols-2 gap-6">
 
+                {/* NAME */}
                 <div>
                   <label className="block text-sm font-bold mb-2">
                     HỌ VÀ TÊN
@@ -256,10 +281,11 @@ export default function ContactPage() {
                   <input
                     type="text"
                     placeholder="Nguyễn Văn A"
-                    className="w-full bg-[#f5f6fb] rounded-md px-4 py-4 outline-none"
+                    className="w-full bg-[#F8F9FA] border border-gray-200 rounded-md px-4 py-4 outline-none focus:border-[#0052A3] focus:ring-1 focus:ring-[#0052A3]"
                   />
                 </div>
 
+                {/* EMAIL */}
                 <div>
                   <label className="block text-sm font-bold mb-2">
                     EMAIL
@@ -268,10 +294,11 @@ export default function ContactPage() {
                   <input
                     type="email"
                     placeholder="email@vi-du.vn"
-                    className="w-full bg-[#f5f6fb] rounded-md px-4 py-4 outline-none"
+                    className="w-full bg-[#F8F9FA] border border-gray-200 rounded-md px-4 py-4 outline-none focus:border-[#0052A3] focus:ring-1 focus:ring-[#0052A3]"
                   />
                 </div>
 
+                {/* PHONE */}
                 <div>
                   <label className="block text-sm font-bold mb-2">
                     SỐ ĐIỆN THOẠI
@@ -280,16 +307,17 @@ export default function ContactPage() {
                   <input
                     type="text"
                     placeholder="090 123 4567"
-                    className="w-full bg-[#f5f6fb] rounded-md px-4 py-4 outline-none"
+                    className="w-full bg-[#F8F9FA] border border-gray-200 rounded-md px-4 py-4 outline-none focus:border-[#0052A3] focus:ring-1 focus:ring-[#0052A3]"
                   />
                 </div>
 
+                {/* SUBJECT */}
                 <div>
                   <label className="block text-sm font-bold mb-2">
                     CHỦ ĐỀ
                   </label>
 
-                  <select className="w-full bg-[#f5f6fb] rounded-md px-4 py-4 outline-none">
+                  <select className="w-full bg-[#F8F9FA] border border-gray-200 rounded-md px-4 py-4 outline-none focus:border-[#0052A3] focus:ring-1 focus:ring-[#0052A3]">
                     <option>Hỗ trợ đơn hàng</option>
                     <option>Khiếu nại</option>
                     <option>Góp ý</option>
@@ -298,6 +326,7 @@ export default function ContactPage() {
 
               </div>
 
+              {/* MESSAGE */}
               <div>
                 <label className="block text-sm font-bold mb-2">
                   LỜI NHẮN
@@ -306,30 +335,36 @@ export default function ContactPage() {
                 <textarea
                   rows={5}
                   placeholder="Hãy mô tả chi tiết yêu cầu của bạn..."
-                  className="w-full bg-[#f5f6fb] rounded-md px-4 py-4 outline-none"
+                  className="w-full bg-[#F8F9FA] border border-gray-200 rounded-md px-4 py-4 outline-none focus:border-[#0052A3] focus:ring-1 focus:ring-[#0052A3]"
                 />
               </div>
 
+              {/* FILE */}
               <div>
                 <label className="block text-sm font-bold mb-3">
                   ĐÍNH KÈM TÀI LIỆU (HÌNH ẢNH, PDF)
                 </label>
 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg py-12 text-center">
-                  <p className="text-4xl mb-2">☁</p>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg py-12 text-center hover:border-[#0052A3] transition">
+
+                  <p className="text-4xl mb-2">
+                    ☁
+                  </p>
 
                   <p className="text-gray-500">
                     Kéo thả file hoặc
-                    <span className="text-blue-700">
+                    <span className="text-[#0052A3] font-medium">
                       {" "}nhấn vào đây
                     </span>
                   </p>
+
                 </div>
               </div>
 
+              {/* SUBMIT */}
               <button
                 type="submit"
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-lg font-semibold"
+                className="w-full bg-[#0052A3] hover:bg-blue-800 text-white py-4 rounded-lg font-semibold transition"
               >
                 GỬI YÊU CẦU
               </button>
@@ -339,48 +374,59 @@ export default function ContactPage() {
           </div>
 
         </div>
+
       </section>
 
       {/* FAQ */}
       <section className="max-w-4xl mx-auto px-6 pb-24">
 
-        <h2 className="text-5xl font-bold text-center mb-10">
+        <h2 className="text-4xl md:text-5xl font-bold text-center mb-10 text-[#1b1f27]">
           Câu hỏi thường gặp
         </h2>
 
         <div className="space-y-4">
 
           {faqs.map((faq, index) => (
+
             <div
               key={index}
-              className="bg-white rounded-lg overflow-hidden"
+              className="bg-white rounded-lg overflow-hidden border border-gray-200"
             >
+
               <button
+                type="button"
                 onClick={() =>
                   setOpenFAQ(
                     openFAQ === index ? null : index
                   )
                 }
-                className="w-full flex justify-between items-center px-6 py-5"
+                className="w-full flex justify-between items-center px-6 py-5 hover:bg-gray-50 transition"
               >
-                <span>{faq.question}</span>
+
+                <span className="font-medium text-left text-gray-900">
+                  {faq.question}
+                </span>
 
                 {openFAQ === index ? (
-                  <FaChevronUp />
+                  <FaChevronUp className="text-[#0052A3]" />
                 ) : (
-                  <FaChevronDown />
+                  <FaChevronDown className="text-gray-500" />
                 )}
+
               </button>
 
               {openFAQ === index && (
-                <div className="px-6 pb-5 text-gray-600">
+                <div className="px-6 pb-5 text-gray-600 leading-7 border-t border-gray-100 pt-4">
                   {faq.answer}
                 </div>
               )}
+
             </div>
+
           ))}
 
         </div>
+
       </section>
 
     </div>

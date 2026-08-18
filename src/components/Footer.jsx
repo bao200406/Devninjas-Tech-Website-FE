@@ -1,5 +1,6 @@
 import { Award, Play, Share2 } from "lucide-react";
 import Logo from "./logo/Logo";
+import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="bg-[#F8F9FA] border-t border-gray-200 pt-12 pb-8">
@@ -23,10 +24,10 @@ export default function Footer() {
         <div>
           <h3 className="font-bold text-gray-900 mb-4">HỖ TRỢ KHÁCH HÀNG</h3>
           <ul className="text-sm text-gray-600 space-y-3">
-            <li className="hover:text-[#0052A3] cursor-pointer">Trung tâm hỗ trợ</li>
-            <li className="hover:text-[#0052A3] cursor-pointer">Chính sách bảo hành</li>
-            <li className="hover:text-[#0052A3] cursor-pointer">Điều khoản dịch vụ</li>
-            <li className="hover:text-[#0052A3] cursor-pointer">Tra cứu đơn hàng</li>
+            <li><Link href="/support" className="hover:text-[#0052A3]">Trung tâm hỗ trợ</Link></li>
+            <li><Link href="/warranty"className="hover:text-[#0052A3] cursor-pointer">Chính sách bảo hành</Link></li>
+            <li><Link href="/terms" className="hover:text-[#0052A3] cursor-pointer">Điều khoản dịch vụ</Link></li>
+            <li><Link href="/faq" className="hover:text-[#0052A3] cursor-pointer">Câu hỏi thường gặp</Link></li>
           </ul>
         </div>
 
@@ -34,10 +35,10 @@ export default function Footer() {
         <div>
           <h3 className="font-bold text-gray-900 mb-4">THÔNG TIN CÔNG TY</h3>
           <ul className="text-sm text-gray-600 space-y-3">
-            <li className="hover:text-[#0052A3] cursor-pointer">Về TechCurator</li>
-            <li className="hover:text-[#0052A3] cursor-pointer">Hệ thống cửa hàng</li>
-            <li className="hover:text-[#0052A3] cursor-pointer">Tuyển dụng</li>
-            <li className="hover:text-[#0052A3] cursor-pointer">Liên hệ</li>
+            <li><Link href="/about" className="hover:text-[#0052A3] cursor-pointer">Về Devninjas</Link></li>
+            <li><Link href="/stores" className="hover:text-[#0052A3] cursor-pointer">Hệ thống cửa hàng</Link></li>
+            <li><Link href="/careers" className="hover:text-[#0052A3] cursor-pointer">Tuyển dụng</Link></li>
+            <li><Link href="/contact" className="hover:text-[#0052A3] cursor-pointer">Liên hệ</Link></li>
           </ul>
         </div>
 
