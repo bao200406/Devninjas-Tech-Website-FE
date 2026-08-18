@@ -1,4 +1,4 @@
-const API_URL = "https://devninjas-tech-website-be.onrender.com";
+const API_URL = "https://devninjas-tech-website-be-1.onrender.com";
 import api from "../axios/api";
 
 export const getAllProducts = async () => {

@@ -36,7 +36,7 @@ export default function EditProductPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [brands, setBrands] = useState([]);
   const [attributeList, setAttributeList] = useState([]);
-  const IMAGE_BASE_URL = "https://devninjas-tech-website-be.onrender.com/uploads/products";
+  const IMAGE_BASE_URL = "https://devninjas-tech-website-be-1.onrender.com/uploads/products";
   
   const [formData, setFormData] = useState({
     name: "",

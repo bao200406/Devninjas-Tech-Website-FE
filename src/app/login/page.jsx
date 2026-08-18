@@ -1,24 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   FaEnvelope,
   FaLock,
   FaEye,
   FaEyeSlash,
-  FaSpinner, // Thêm icon spinner
+  FaSpinner,
 } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion"; // Thêm animation
-import { toast } from "react-toastify"; // Dùng toast thay alert
-import { loginUser } from "../../services/authService";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
+import { loginUser, googleLogin } from "../../services/authService";
+import Logo from "../../components/logo/Logo";
 
-export default function LoginPage() {
+function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Cấu hình Animation
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
@@ -29,10 +31,22 @@ export default function LoginPage() {
     setFormData((prev) => ({ ...prev, [name]: value.trim() }));
   };
 
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Kiểm tra không để trống
+    if (!formData.email || !formData.password) {
+      toast.error("Vui lòng nhập đầy đủ thông tin đăng nhập!");
+      return;
+    }
+
+    // 2. Kiểm tra mật khẩu tối thiểu (đồng bộ với backend nếu cần)
+    if (formData.password.length < 8) {
+      toast.error("Mật khẩu phải từ 8 ký tự trở lên!");
+      return;
+    }
+
     setLoading(true);
-    
     const loadingId = toast.loading("Đang xác thực...");
 
     try {
@@ -42,7 +56,6 @@ export default function LoginPage() {
         throw new Error("Không nhận được phản hồi từ máy chủ");
       }
 
-      // Sửa đường dẫn lấy role dựa trên cấu trúc API: res.data.user.role
       const userRole = res.data?.user?.role;
       
       toast.update(loadingId, {
@@ -52,7 +65,6 @@ export default function LoginPage() {
         autoClose: 2000,
       });
 
-      // Điều hướng dựa trên role
       setTimeout(() => {
         if (userRole === "admin") {
           window.location.href = "/admin2/dashboard";
@@ -71,6 +83,58 @@ export default function LoginPage() {
     }
   };
 
+  // 1. Xử lý khi bấm nút Google: chuyển hướng sang trang đăng nhập của Google
+  const handleGoogleClick = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI;
+    
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=select_account`;
+    
+    window.location.href = googleAuthUrl;
+  };
+
+  // 2. Tự động bắt mã 'code' khi Google redirect ngược lại trang login này
+  useEffect(() => {
+    const code = searchParams.get('code');
+
+    if (code) {
+      const handleGoogleCallback = async () => {
+        const loadingId = toast.loading("Đang xử lý đăng nhập Google...");
+        try {
+          const res = await googleLogin(code);
+
+          if (!res) {
+            throw new Error("Không nhận được phản hồi từ máy chủ");
+          }
+
+          const userRole = res.data?.user?.role;
+
+          toast.update(loadingId, {
+            render: "Đăng nhập Google thành công!",
+            type: "success",
+            isLoading: false,
+            autoClose: 2000,
+          });
+
+          setTimeout(() => {
+            if (userRole === "admin") {
+              window.location.href = "/admin2/dashboard";
+            } else {
+              window.location.href = "/";
+            }
+          }, 1500);
+
+        } catch (err) {
+          toast.dismiss(loadingId);
+          const errorMessage = err.response?.data?.message || err.message || "Đăng nhập Google thất bại!";
+          toast.error(errorMessage);
+          router.replace('/login');
+        }
+      };
+
+      handleGoogleCallback();
+    }
+  }, [searchParams, router]);
 
   return (
     <motion.div 
@@ -82,19 +146,19 @@ export default function LoginPage() {
         className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8"
       >
         <motion.div variants={itemVariants} className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-blue-700 rounded-md flex items-center justify-center text-white font-bold">A</div>
-          <h2 className="text-2xl font-bold text-blue-700">Azure Logic</h2>
+          <Logo />
         </motion.div>
 
         <motion.h1 variants={itemVariants} className="text-4xl font-bold text-gray-900 mb-2">Đăng nhập</motion.h1>
         <motion.p variants={itemVariants} className="text-gray-500 mb-8">Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng.</motion.p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Thêm noValidate để chặn popup lỗi mặc định của trình duyệt */}
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           <motion.div variants={itemVariants}>
             <label className="block text-sm font-semibold mb-2">EMAIL / SỐ ĐIỆN THOẠI</label>
             <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaEnvelope className="text-gray-400" />
-              <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="your@email.com" className="w-full bg-transparent px-3 py-4 outline-none" required />
+              <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="your@email.com" className="w-full bg-transparent px-3 py-4 outline-none" />
             </div>
           </motion.div>
 
@@ -102,7 +166,7 @@ export default function LoginPage() {
             <label className="block text-sm font-semibold mb-2">MẬT KHẨU</label>
             <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaLock className="text-gray-400" />
-              <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" required />
+              <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" />
               <button type="button" onClick={() => setShowPassword(!showPassword)}>
                 {showPassword ? <FaEyeSlash className="text-gray-500" /> : <FaEye className="text-gray-500" />}
               </button>
@@ -131,7 +195,11 @@ export default function LoginPage() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="flex justify-center">
-          <button className="w-full border border-gray-300 rounded-xl py-4 flex items-center justify-center gap-3 hover:bg-gray-50 transition">
+          <button 
+            type="button" 
+            onClick={handleGoogleClick}
+            className="w-full border border-gray-300 rounded-xl py-4 flex items-center justify-center gap-3 hover:bg-gray-50 transition"
+          >
             <FcGoogle size={22} />
             <span className="font-medium text-gray-700">Google</span>
           </button>
@@ -143,5 +211,13 @@ export default function LoginPage() {
         </motion.p>
       </motion.div>
     </motion.div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f3f5fb] flex items-center justify-center"><FaSpinner className="animate-spin text-blue-700 text-3xl" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

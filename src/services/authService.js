@@ -54,3 +54,12 @@ export const changePassword = async (oldPassword, newPassword) => {
   });
   return response.data;
 };
+
+// Gọi API đăng nhập bằng Google OAuth
+export const googleLogin = async (code) => {
+  // Gửi mã code nhận được từ Google lên Backend
+  const response = await api.post("/auth/google-login", { code }, {
+    withCredentials: true // Đảm bảo nhận và lưu cookie httpOnly trả về từ backend
+  });
+  return response.data;
+};

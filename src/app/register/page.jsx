@@ -16,6 +16,7 @@ import {
   FaGoogle,
   FaSpinner
 } from "react-icons/fa";
+import Logo from "../../components/logo/Logo";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -44,11 +45,39 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation cơ bản
+    // Kiểm tra không để trống các trường
+    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
+      toast.error("Vui lòng nhập đầy đủ thông tin!");
+      return;
+    }
+
+    // Kiểm tra định dạng email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Email không đúng định dạng!");
+      return;
+    }
+
+    // Kiểm tra định dạng số điện thoại (10-11 số khớp với backend)
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      toast.error("Số điện thoại không đúng định dạng (10-11 số)!");
+      return;
+    }
+
+    // Kiểm tra độ dài mật khẩu (>= 8 ký tự khớp với backend)
+    if (formData.password.length < 8) {
+      toast.error("Mật khẩu phải từ 8 ký tự trở lên!");
+      return;
+    }
+
+    // Kiểm tra mật khẩu xác nhận có khớp không
     if (formData.password !== formData.confirmPassword) {
       toast.error("Mật khẩu xác nhận không khớp!");
       return;
     }
+
+    // Kiểm tra đồng ý điều khoản
     if (!formData.agreeTerms) {
       toast.error("Bạn cần đồng ý với điều khoản sử dụng!");
       return;
@@ -103,8 +132,7 @@ export default function RegisterPage() {
       >
         {/* Logo & Heading */}
         <motion.div variants={itemVariants} className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-md bg-blue-700 flex items-center justify-center text-white font-bold">A</div>
-          <h2 className="text-2xl font-bold text-blue-700">Azure Logic</h2>
+          <Logo />
         </motion.div>
 
         <motion.h1 variants={itemVariants} className="text-4xl font-bold text-gray-900 mb-2">Tạo tài khoản</motion.h1>
@@ -124,7 +152,7 @@ export default function RegisterPage() {
           )}
         </AnimatePresence>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit} noValidate>
           {/* Các Input Fields */}
           {[
             { label: "HỌ VÀ TÊN", name: "name", type: "text", icon: FaUser, placeholder: "Nguyễn Văn A" },
@@ -142,7 +170,6 @@ export default function RegisterPage() {
                   className="w-full bg-transparent px-3 py-4 outline-none"
                   value={formData[field.name]}
                   onChange={handleChange}
-                  required
                 />
               </div>
             </motion.div>
@@ -153,7 +180,7 @@ export default function RegisterPage() {
             <label className="block text-sm font-semibold mb-2">MẬT KHẨU</label>
             <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaLock className="text-gray-400" />
-              <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" value={formData.password} onChange={handleChange} required />
+              <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" value={formData.password} onChange={handleChange} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <FaEyeSlash className="text-gray-500" /> : <FaEye className="text-gray-500" />}</button>
             </div>
           </motion.div>
@@ -162,13 +189,13 @@ export default function RegisterPage() {
             <label className="block text-sm font-semibold mb-2">XÁC NHẬN MẬT KHẨU</label>
             <div className="flex items-center bg-gray-100 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <FaShieldAlt className="text-gray-400" />
-              <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" value={formData.confirmPassword} onChange={handleChange} required />
+              <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" className="w-full bg-transparent px-3 py-4 outline-none" value={formData.confirmPassword} onChange={handleChange} />
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}>{showConfirm ? <FaEyeSlash className="text-gray-500" /> : <FaEye className="text-gray-500" />}</button>
             </div>
           </motion.div>
 
           <motion.label variants={itemVariants} className="flex items-start gap-2 text-sm text-gray-600">
-            <input name="agreeTerms" type="checkbox" className="mt-1" checked={formData.agreeTerms} onChange={handleChange} required />
+            <input name="agreeTerms" type="checkbox" className="mt-1" checked={formData.agreeTerms} onChange={handleChange} />
             <span>Tôi đồng ý với điều khoản sử dụng và chính sách bảo mật</span>
           </motion.label>
 

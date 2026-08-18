@@ -4,7 +4,7 @@ import Link from "next/link";
 const getPublicUrl = (path) => {
   if (!path) return "/placeholder.png";
   if (path.startsWith("http")) return path;
-  return `https://devninjas-tech-website-be.onrender.com/uploads/products/${path.replace(/\\/g, '/')}`;
+  return `https://devninjas-tech-website-be-1.onrender.com/uploads/products/${path.replace(/\\/g, '/')}`;
 };
 
 export default function ProductCard({

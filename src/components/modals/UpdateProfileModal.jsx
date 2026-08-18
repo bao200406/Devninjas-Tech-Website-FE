@@ -23,7 +23,7 @@ const UpdateProfileModal = ({ isOpen, onClose, currentUser, onUpdateSuccess }) =
         birthday: currentUser.birthday ? currentUser.birthday.split('T')[0] : '',
         gender: currentUser.gender || 'male',
       });
-      setPreviewAvatar(currentUser.avatar ? `https://devninjas-tech-website-be.onrender.com/uploads/users/${currentUser.avatar}` : '');
+      setPreviewAvatar(currentUser.avatar ? `https://devninjas-tech-website-be-1.onrender.com/uploads/users/${currentUser.avatar}` : '');
       setAvatarFile(null);
       setMessage({ type: '', text: '' });
     }

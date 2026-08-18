@@ -12,16 +12,16 @@ const getPublicUrl = (path) => {
   if (cleanPath.includes('uploads')) {
     const index = cleanPath.indexOf('uploads');
     const relativePath = cleanPath.substring(index);
-    return `https://devninjas-tech-website-be.onrender.com/${relativePath}`;
+    return `https://devninjas-tech-website-be-1.onrender.com/${relativePath}`;
   }
 
   // Nếu đường dẫn có chứa thư mục con (ví dụ: products/filename.jpg)
   if (cleanPath.startsWith('products/')) {
-    return `https://devninjas-tech-website-be.onrender.com/uploads/${cleanPath}`;
+    return `https://devninjas-tech-website-be-1.onrender.com/uploads/${cleanPath}`;
   }
 
   // Nếu backend chỉ trả về tên file thuần túy (ví dụ: products-1785150897541-852043014.jpg)
-  return `https://devninjas-tech-website-be.onrender.com/uploads/products/${cleanPath}`;
+  return `https://devninjas-tech-website-be-1.onrender.com/uploads/products/${cleanPath}`;
 };
 
 export default function ProductGallery({ variants, selectedVariant }) {

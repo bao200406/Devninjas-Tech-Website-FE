@@ -17,7 +17,7 @@ export default function ChatWidget() {
 
   // Các câu hỏi gợi ý nhanh cho thương mại điện tử
   const quickSuggestions = [
-    "💻 Laptop gaming dưới 25 triệu",
+    "💻 Laptop gaming dưới 40 triệu",
     "📱 Điện thoại pin trâu giá rẻ",
     "🎧 Phụ kiện tai nghe, bàn phím"
   ];
@@ -157,7 +157,7 @@ export default function ChatWidget() {
                               const cleanImgPath = imgPath.startsWith('/') ? imgPath.slice(1) : imgPath;
                               const cleanFolder = folderPrefix.endsWith('/') ? folderPrefix : `${folderPrefix}/`;
 
-                              return `https://devninjas-tech-website-be.onrender.com${cleanFolder}${cleanImgPath}`;
+                              return `https://devninjas-tech-website-be-1.onrender.com${cleanFolder}${cleanImgPath}`;
                             })()
                           } 
                           alt={prod.name} 

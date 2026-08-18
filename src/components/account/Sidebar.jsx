@@ -20,17 +20,24 @@ const Sidebar = ({ user }) => {
       
       {/* User Info */}
       <div className="flex items-center gap-4 mb-8 p-3 rounded-2xl bg-gray-50 border border-gray-100">
-         <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
-           {user?.avatar ? (
-             <img 
-               src={`https://devninjas-tech-website-be.onrender.com/uploads/users/${user.avatar}`} 
-               alt={user?.name} 
-               className="w-full h-full object-cover"
-             />
-           ) : (
-             user?.name?.charAt(0).toUpperCase() || 'U'
-           )}
-         </div>
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-xs shadow-md">
+          {user?.avatar && user.avatar.trim() !== "" && user.avatar !== "undefined" && user.avatar !== "null" ? (
+            <img 
+              src={
+                user.avatar.startsWith('http') 
+                  ? user.avatar 
+                  : `https://devninjas-tech-website-be-1.onrender.com/uploads/users/${user.avatar}`
+              } 
+              alt={user?.name || 'User'} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            // Nếu không có avatar hợp lệ -> Hiển thị chữ cái đầu của tên (Ví dụ: 'B')
+            <span className="text-white font-bold text-sm">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </span>
+          )}
+        </div>
          <div className="overflow-hidden">
            <p className="font-bold text-gray-800 truncate">{user?.name}</p>
            <p className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase font-bold inline-block">{user?.role || "Member"}</p>
