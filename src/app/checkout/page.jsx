@@ -40,6 +40,7 @@ const getPublicUrl = (path) => {
 function CheckoutContent() {
  
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [shippingMethod, setShippingMethod] = useState("standard");
   const [cartItems, setCartItems] = useState([]);
   const [availableVouchers, setAvailableVouchers] = useState([]);
   const [isVoucherListOpen, setIsVoucherListOpen] = useState(false);
@@ -51,6 +52,12 @@ function CheckoutContent() {
   const [appliedVoucher, setAppliedVoucher] = useState(null); // Lưu thông tin voucher đã chọn
   const [discount, setDiscount] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+  const shippingFee =
+  shippingMethod === "express"
+    ? 35000
+    : shippingMethod === "urgent"
+      ? 85000
+      : 0;
   const router = useRouter();
   const searchParams = useSearchParams();
   const isBuyNow = searchParams.get("type") === "buynow";
@@ -159,11 +166,9 @@ setUseAnotherAddress(false);
       loadCheckoutItems();
     }, [isBuyNow, router]);
 
-    useEffect(() => {
-      if (!appliedVoucher) {
-        setTotalPrice(subtotal);
-      }
-    }, [subtotal, appliedVoucher]);
+useEffect(() => {
+  setTotalPrice(subtotal + shippingFee - discount);
+}, [subtotal, shippingFee, discount]);
 
 
     useEffect(() => {
@@ -295,6 +300,8 @@ setSelectedAddress(defaultAddress);
         voucherId: appliedVoucher?._id,
         status: 'pending', // Chuyển trạng thái sang chờ thanh toán
         setAsDefault,
+        shippingMethod,
+        shippingFee,
       };
 
       try {
@@ -333,19 +340,93 @@ setSelectedAddress(defaultAddress);
 
 
 
-      useEffect(() => {
-        const fetchVouchers = async () => {
-          if (subtotal > 0) {
-            try {
-              const response = await getAvailableVouchers(subtotal);
-              setAvailableVouchers(response.data);
-            } catch (error) {
-              console.error("Không lấy được voucher:", error);
-            }
-          }
-        };
-        fetchVouchers();
-      }, [subtotal]); // Cập nhật lại khi subtotal thay đổi
+useEffect(() => {
+  const fetchVouchers = async () => {
+    if (subtotal <= 0) {
+      setAvailableVouchers([]);
+      return;
+    }
+
+    try {
+      const response = await getAvailableVouchers(subtotal);
+
+      const vouchers = Array.isArray(response?.data)
+        ? response.data
+        : [];
+      console.log("Tất cả voucher:", vouchers);
+      const now = new Date();
+
+      const validVouchers = vouchers.filter((voucher) => {
+        // 1. Voucher phải đang active
+        if (voucher.isActive !== true) {
+          return false;
+        }
+
+        // 2. Kiểm tra thời gian
+        const startDate = new Date(voucher.startDate);
+        const endDate = new Date(voucher.endDate);
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          return false;
+        }
+
+        if (now < startDate || now > endDate) {
+          return false;
+        }
+
+        // 3. Kiểm tra số lượt sử dụng
+        const usedCount = Number(voucher.usedCount || 0);
+        const usageLimit = Number(voucher.usageLimit || 0);
+
+        // usageLimit <= 0 => voucher đã hết lượt / không hợp lệ
+        if (usageLimit <= 0) {
+          return false;
+        }
+
+        // Đã dùng hết số lượt
+        if (usedCount >= usageLimit) {
+          return false;
+        }
+
+        // 4. Kiểm tra giá trị đơn tối thiểu
+        const minOrderValue = Number(voucher.minOrderValue || 0);
+
+        if (subtotal < minOrderValue) {
+          return false;
+        }
+
+        return true;
+      });
+
+      console.log("Tất cả voucher:", vouchers);
+      console.log("Voucher còn khả dụng:", validVouchers);
+
+      setAvailableVouchers(validVouchers);
+
+      // Nếu voucher đang chọn đã hết lượt / hết hạn
+      if (
+        appliedVoucher &&
+        !validVouchers.some(
+          (v) => String(v._id) === String(appliedVoucher._id)
+        )
+      ) {
+        setAppliedVoucher(null);
+        setDiscount(0);
+      }
+    } catch (error) {
+      console.error(
+        "Không lấy được voucher:",
+        error.response?.data || error
+      );
+
+      setAvailableVouchers([]);
+      setAppliedVoucher(null);
+      setDiscount(0);
+    }
+  };
+
+  fetchVouchers();
+}, [subtotal]); // Cập nhật lại khi subtotal thay đổi
 
       const handleApplyVoucher = async (voucher) => {
         console.log("Voucher đang áp dụng:", voucher);
@@ -357,7 +438,7 @@ setSelectedAddress(defaultAddress);
 
           // Cập nhật state với dữ liệu trả về từ Backend
           setDiscount(result.data.discount);
-          setTotalPrice(result.data.finalPrice);
+          // setTotalPrice(result.data.finalPrice);
           setAppliedVoucher(voucher);
           setIsVoucherListOpen(false);
 
@@ -368,11 +449,6 @@ setSelectedAddress(defaultAddress);
           alert(error.response?.data?.message || "Không thể áp dụng voucher");
         }
       };
-
-      // Tạm thời chưa làm ship
-      const shippingFee = 0;
-
-
   return (
     <div className="min-h-screen bg-[#f5f5f7] px-4 py-6">
       <div className="mx-auto max-w-[1180px]">
@@ -755,56 +831,156 @@ style={{
               )}  
               </div>
 
-              {/* Shipping */}
-              <div className="rounded-xl  ">
-                <div className="mb-5 flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
-                    2
-                  </div>
+{/* Shipping */}
+<div className="rounded-xl">
+  <div className="mb-5 flex items-center gap-2">
+    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#005BAC] text-sm font-semibold text-white">
+      2
+    </div>
 
-                  <h2 className="text-[15px] font-semibold text-gray-800">
-                    Phương thức giao hàng
-                  </h2>
-                </div>
+    <h2 className="text-[15px] font-semibold text-gray-800">
+      Phương thức giao hàng
+    </h2>
+  </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                  {/* item */}
-                  <div className="rounded-xl border-2 border-[#005BAC] bg-[#f8fbff] p-4">
-                    <Truck className="mb-3 text-[#005BAC]" size={22} />
+  <div className="grid gap-4 md:grid-cols-3">
 
-                    <h3 className="font-semibold text-gray-800">
-                      Giao tiêu chuẩn
-                    </h3>
+    {/* Giao tiêu chuẩn */}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => setShippingMethod("standard")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setShippingMethod("standard");
+        }
+      }}
+      className={`relative w-full cursor-pointer select-none rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+        shippingMethod === "standard"
+          ? "border-[#005BAC] bg-[#f8fbff] shadow-sm"
+          : "border-gray-200 bg-white hover:border-[#8bbbe5] hover:bg-gray-50"
+      }`}
+    >
+      <input
+        type="radio"
+        name="shipping"
+        value="standard"
+        checked={shippingMethod === "standard"}
+        onChange={() => setShippingMethod("standard")}
+        className="pointer-events-none absolute right-4 top-4 h-4 w-4 accent-[#005BAC]"
+      />
 
-                    <p className="mt-1 text-sm text-gray-500">3 - 5 ngày</p>
+      <Truck
+        className="mb-3 text-[#005BAC]"
+        size={23}
+      />
 
-                    <p className="mt-4 font-semibold text-[#005BAC]">Miễn phí</p>
-                  </div>
+      <h3 className="font-semibold text-gray-800">
+        Giao tiêu chuẩn
+      </h3>
 
-                  <div className="rounded-xl border bg-white p-4">
-                    <Zap className="mb-3 text-orange-500" size={22} />
+      <p className="mt-1 text-sm text-gray-500">
+        3 - 5 ngày
+      </p>
 
-                    <h3 className="font-semibold text-gray-800">Giao nhanh</h3>
+      <p className="mt-4 font-semibold text-[#005BAC]">
+        Miễn phí
+      </p>
+    </div>
 
-                    <p className="mt-1 text-sm text-gray-500">1 - 2 ngày</p>
 
-                    <p className="mt-4 font-semibold text-gray-800">35.000đ</p>
-                  </div>
+    {/* Giao nhanh */}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => setShippingMethod("express")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setShippingMethod("express");
+        }
+      }}
+      className={`relative w-full cursor-pointer select-none rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+        shippingMethod === "express"
+          ? "border-[#005BAC] bg-[#f8fbff] shadow-sm"
+          : "border-gray-200 bg-white hover:border-[#8bbbe5] hover:bg-gray-50"
+      }`}
+    >
+      <input
+        type="radio"
+        name="shipping"
+        value="express"
+        checked={shippingMethod === "express"}
+        onChange={() => setShippingMethod("express")}
+        className="pointer-events-none absolute right-4 top-4 h-4 w-4 accent-[#005BAC]"
+      />
 
-                  <div className="rounded-xl border bg-white p-4">
-                    <BadgeDollarSign
-                      className="mb-3 text-amber-500"
-                      size={22}
-                    />
+      <Zap
+        className="mb-3 text-orange-500"
+        size={23}
+      />
 
-                    <h3 className="font-semibold text-gray-800">Hỏa tốc</h3>
+      <h3 className="font-semibold text-gray-800">
+        Giao nhanh
+      </h3>
 
-                    <p className="mt-1 text-sm text-gray-500">2 - 4 giờ</p>
+      <p className="mt-1 text-sm text-gray-500">
+        1 - 2 ngày
+      </p>
 
-                    <p className="mt-4 font-semibold text-gray-800">85.000đ</p>
-                  </div>
-                </div>
-              </div>
+      <p className="mt-4 font-semibold text-gray-800">
+        35.000đ
+      </p>
+    </div>
+
+
+    {/* Hỏa tốc */}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => setShippingMethod("urgent")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setShippingMethod("urgent");
+        }
+      }}
+      className={`relative w-full cursor-pointer select-none rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+        shippingMethod === "urgent"
+          ? "border-[#005BAC] bg-[#f8fbff] shadow-sm"
+          : "border-gray-200 bg-white hover:border-[#8bbbe5] hover:bg-gray-50"
+      }`}
+    >
+      <input
+        type="radio"
+        name="shipping"
+        value="urgent"
+        checked={shippingMethod === "urgent"}
+        onChange={() => setShippingMethod("urgent")}
+        className="pointer-events-none absolute right-4 top-4 h-4 w-4 accent-[#005BAC]"
+      />
+
+      <BadgeDollarSign
+        className="mb-3 text-amber-500"
+        size={23}
+      />
+
+      <h3 className="font-semibold text-gray-800">
+        Hỏa tốc
+      </h3>
+
+      <p className="mt-1 text-sm text-gray-500">
+        2 - 4 giờ
+      </p>
+
+      <p className="mt-4 font-semibold text-gray-800">
+        85.000đ
+      </p>
+    </div>
+
+  </div>
+</div>
 
               {/* Payment */}
               <div className="rounded-xl">
