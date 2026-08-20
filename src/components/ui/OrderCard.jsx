@@ -45,7 +45,7 @@ export default function OrderCard({ order }) {
   const secondaryActions = actions.filter(a => a.style !== 'primary');
 
   // 4. Helper functions
-  const orderId = order._id?.slice(-6)?.toUpperCase() || "N/A";
+  const orderId = order.orderCode || "N/A";
   const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
   // Lấy sản phẩm đầu tiên trong đơn hàng để truyền orderDetailId vào ReviewModal
@@ -57,7 +57,7 @@ export default function OrderCard({ order }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Mã đơn hàng</p>
-          <h3 className="font-extrabold text-slate-800 text-lg">#{orderId}</h3>
+          <h3 className="font-extrabold text-slate-800 text-lg">{orderId}</h3>
         </div>
         {/* Dropdown cho các hành động phụ */}
         {secondaryActions.length > 0 && (
@@ -134,7 +134,7 @@ export default function OrderCard({ order }) {
               </svg>
             </div>
             <DialogTitle className="text-center text-2xl font-bold text-slate-900">
-              Hủy đơn hàng #{order._id?.slice(-6)}
+              Hủy đơn hàng #{order.orderCode || "N/A"}
             </DialogTitle>
             <DialogDescription className="text-center text-slate-500">
               Bạn chắc chắn muốn hủy đơn hàng này? Hãy cho chúng tôi biết lý do nhé.

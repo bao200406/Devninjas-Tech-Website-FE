@@ -62,7 +62,7 @@ const recentOrders = [
     email: "emma@example.com",
     product: "Pro Dashboard License",
     status: "Completed",
-    amount: "$299.00",
+    amount: "299.000 ₫",
     initials: "EW",
     color: "bg-orange-500",
   },
@@ -72,7 +72,7 @@ const recentOrders = [
     email: "james@company.io",
     product: "Team Plan Upgrade",
     status: "Processing",
-    amount: "$599.00",
+    amount: "599.000 ₫",
     initials: "JC",
     color: "bg-emerald-500",
   },
@@ -82,7 +82,7 @@ const recentOrders = [
     email: "sofia@startup.co",
     product: "Enterprise License",
     status: "Completed",
-    amount: "$1,499.00",
+    amount: "1.499.000 ₫",
     initials: "SG",
     color: "bg-blue-500",
   },
@@ -92,7 +92,7 @@ const recentOrders = [
     email: "alex@dev.com",
     product: "Single License",
     status: "Pending",
-    amount: "$79.00",
+    amount: "79.000 ₫",
     initials: "AT",
     color: "bg-amber-500",
   },
@@ -102,7 +102,7 @@ const recentOrders = [
     email: "maria@agency.co",
     product: "Pro Dashboard License",
     status: "Completed",
-    amount: "$299.00",
+    amount: "299.000 ₫",
     initials: "MS",
     color: "bg-orange-400",
   },
@@ -112,7 +112,7 @@ const recentOrders = [
     email: "david@tech.io",
     product: "Team Plan Upgrade",
     status: "Cancelled",
-    amount: "$599.00",
+    amount: "599.000 ₫",
     initials: "DK",
     color: "bg-rose-500",
   },
@@ -153,7 +153,7 @@ const recentActivity = [
     id: 4,
     type: "payment",
     title: "Payment received",
-    desc: "$1,499 from Sofia Garcia",
+    desc: "1.499.000 ₫ from Sofia Garcia",
     time: "2 hours ago",
     icon: CreditCard,
     iconColor: "text-blue-500",
@@ -347,7 +347,7 @@ export default function Dashboard() {
 
         <StatCard
           title="Tổng doanh thu"
-          value={`$${stats.totalRevenue.toLocaleString()}`}
+          value={`${stats.totalRevenue.toLocaleString("vi-VN")} ₫`}
           trend="+12.5%"
           trendUp={true}
           icon={DollarSign}
@@ -462,7 +462,23 @@ export default function Dashboard() {
 
                 <YAxis hide />
 
-                <Tooltip />
+                <Tooltip
+                formatter={(value) => {
+                  if (activeTab === "Revenue" || activeTab === "AOV") {
+                    return [
+                      `${Number(value).toLocaleString("vi-VN")} ₫`,
+                      activeTab === "Revenue"
+                        ? "Doanh thu"
+                        : "Giá trị đơn trung bình"
+                    ];
+                  }
+
+                  return [
+                    Number(value).toLocaleString("vi-VN"),
+                    "Đơn hàng"
+                  ];
+                }}
+              />
 
                 <Bar
                   /*
