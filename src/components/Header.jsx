@@ -13,17 +13,24 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { getCart } from "@/services/cartService";
 import { getAllProducts } from "@/services/productService";
+import { getAllCategories } from "@/services/categoryService";
 import Logo from "./logo/Logo";
 
 export default function Header() {
-  const menuItems = [
-    "ĐIỆN THOẠI",
-    "LAPTOP",
-    "PHỤ KIỆN",
-    "AUDIO",
-    "GAMING",
-    "ĐỒNG HỒ",
-  ];
+  const [categories, setCategories] = useState([]);
+  const fetchCategories = async () => {
+  try {
+    const data = await getAllCategories();
+
+    console.log("========== HEADER CATEGORIES ==========");
+    console.log("CATEGORIES:", data);
+
+    setCategories(Array.isArray(data) ? data : []);
+  } catch (error) {
+    console.error("Không thể lấy danh sách danh mục:", error);
+    setCategories([]);
+  }
+};
 
   // =========================
   // SEARCH
@@ -115,6 +122,7 @@ const fetchProducts = async () => {
   useEffect(() => {
     fetchCartCount();
     fetchProducts();
+    fetchCategories();
   }, []);
 
   // =========================
@@ -228,15 +236,21 @@ const results = products
             {/* DROPDOWN */}
             <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
 
-              {menuItems.map((item) => (
-                <Link
-                  key={item}
-                  href={`/${item.toLowerCase()}`}
-                  className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 first:rounded-t-xl last:rounded-b-xl"
-                >
-                  {item}
-                </Link>
-              ))}
+              {categories.length > 0 ? (
+                categories.map((category) => (
+                  <Link
+                    key={category._id}
+                    href={`/products/category/${category._id}`}
+                    className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 first:rounded-t-xl last:rounded-b-xl"
+                  >
+                    {category.name}
+                  </Link>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-400">
+                  Đang tải danh mục...
+                </div>
+              )}
 
             </div>
           </div>
