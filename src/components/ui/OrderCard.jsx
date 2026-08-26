@@ -5,6 +5,7 @@ import { useOrderActions } from '../../hooks/useOrderActions';
 import { ActionMenu } from '../../components/ui/ActionMenu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
 import ReviewModal from "../../components/modals/ReviewModal";
+import OrderDetailModal from "../../components/orders/OrderDetailModal";
 
 const getPublicUrl = (path) => {
   if (!path) return "/placeholder.png";
@@ -27,6 +28,7 @@ export default function OrderCard({ order }) {
 
   // State quản lý Modal Đánh giá
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // 2. Kiểm tra an toàn
   if (!order) return null;
@@ -97,7 +99,10 @@ export default function OrderCard({ order }) {
         
         <div className="flex gap-2 items-center">
           {/* Nút Xem chi tiết */}
-          <button className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+          <button
+            onClick={() => setShowDetailModal(true)}
+            className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
             Xem chi tiết
           </button>
 
@@ -183,6 +188,12 @@ export default function OrderCard({ order }) {
           }}
         />
       )}
+
+      <OrderDetailModal
+        order={order}
+        open={showDetailModal}
+        onOpenChange={setShowDetailModal}
+      />
     </div>
   );
 }

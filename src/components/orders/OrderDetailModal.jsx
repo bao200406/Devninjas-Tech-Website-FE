@@ -2,6 +2,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+const getPublicUrl = (path) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
+
+  const index = path.indexOf("uploads");
+  if (index === -1) return path;
+
+  const relativePath = path.substring(index).replace(/\\/g, "/");
+
+  return `https://devninjas-tech-website-be-1.onrender.com/${relativePath}`;
+};
+
 export default function OrderDetailModal({ order, open, onOpenChange }) {
   if (!order) return null;
 
@@ -57,7 +69,7 @@ export default function OrderDetailModal({ order, open, onOpenChange }) {
                 {order.items?.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 flex items-center gap-4">
-                      <img src={item.image} className="w-10 h-10 rounded-lg object-cover border border-slate-100" />
+                      <img src={getPublicUrl(item.image)}className="w-10 h-10 rounded-lg object-cover border border-slate-100"alt={item.name}/>
                       <span className="font-medium text-slate-900">{item.name}</span>
                     </td>
                     <td className="px-6 py-4 text-center text-slate-500 font-mono text-xs">{item.sku || "SS25-DEFAULT"}</td>
@@ -69,6 +81,18 @@ export default function OrderDetailModal({ order, open, onOpenChange }) {
               </tbody>
             </table>
           </div>
+
+          {order.status === "cancelled" && (
+            <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
+              <p className="text-[10px] uppercase font-bold text-rose-500 mb-2">
+                Lý do hủy đơn
+              </p>
+
+              <p className="text-sm text-rose-700">
+                {order.cancelReason || "Không có lý do hủy đơn"}
+              </p>
+            </div>
+          )}
 
           {/* Tài chính & Vận chuyển */}
           <div className="grid grid-cols-2 gap-8 items-start">
