@@ -13,7 +13,7 @@ export default function ProductsPage({ params }) {
 
   const [filters, setFilters] = useState({ 
     minPrice: null, 
-    maxPrice: null, 
+    maxPrice: 20000000, 
     attributeValueIds: [] 
   });
   
@@ -24,10 +24,13 @@ export default function ProductsPage({ params }) {
 
   // Lấy categoryId từ params (giả sử cấu trúc thư mục là category/[categoryId])
   const { categoryId } = use(params);
+  const categoryName =
+  products.length > 0 ? products[0].categoryId.name : "";
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setFilters({ minPrice: null, maxPrice: 20000000, attributeValueIds: [] });
         setLoading(true);
         const data = await getProductsByCategory(categoryId);
         setProducts(data.products);
@@ -55,7 +58,7 @@ export default function ProductsPage({ params }) {
 
   // 3. Hàm reset bộ lọc
   const handleResetFilter = async () => {
-    const resetFilters = { minPrice: null, maxPrice: null, attributeValueIds: [] };
+    const resetFilters = { minPrice: null, maxPrice: 20000000, attributeValueIds: [] };
     setFilters(resetFilters);
     const data = await getProductsByCategory(categoryId, 1, 8, resetFilters);
     setProducts(data.products);
@@ -90,6 +93,8 @@ export default function ProductsPage({ params }) {
         <div className="hidden lg:block w-80 flex-shrink-0">
            <FilterSidebar 
             categoryId={categoryId}           // <--- Truyền thêm prop này
+            categoryName={categoryName}     
+            priceGroupName="desktop-price"
             isOpen={isFilterOpen} 
             onClose={() => setIsFilterOpen(false)}
             filters={filters} 
@@ -108,6 +113,8 @@ export default function ProductsPage({ params }) {
         <div className="lg:hidden">
           <FilterSidebar 
             categoryId={categoryId}         // <--- Truyền thêm prop này
+            categoryName={categoryName}     
+            priceGroupName="mobile-price"
             isOpen={isFilterOpen} 
             onClose={() => setIsFilterOpen(false)} 
             filters={filters}
@@ -162,6 +169,15 @@ export default function ProductsPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {loading ? (
                 <p className="text-gray-500">Đang tải sản phẩm...</p>
+            ) : products.length === 0 ? (
+                <div className="col-span-full py-16 text-center">
+                  <p className="text-lg font-semibold text-gray-700">
+                    Không có sản phẩm này
+                  </p>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Vui lòng thử lại.
+                  </p>
+                </div>
             ) : (
                 products.map((product) => (
                     <ProductCard // Bây giờ dùng chung 1 component ProductCard
