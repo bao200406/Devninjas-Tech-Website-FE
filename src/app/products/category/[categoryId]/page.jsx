@@ -16,6 +16,7 @@ export default function ProductsPage({ params }) {
     maxPrice: 20000000, 
     attributeValueIds: [] 
   });
+  const [priceResetKey, setPriceResetKey] = useState(0);
   
   // State quản lý dữ liệu sản phẩm
   const [products, setProducts] = useState([]);
@@ -58,10 +59,12 @@ export default function ProductsPage({ params }) {
 
   // 3. Hàm reset bộ lọc
   const handleResetFilter = async () => {
-    const resetFilters = { minPrice: null, maxPrice: 20000000, attributeValueIds: [] };
+    const resetFilters = { minPrice: null, maxPrice: null, attributeValueIds: [] };
     setFilters(resetFilters);
+    setPriceResetKey((key) => key + 1);
     const data = await getProductsByCategory(categoryId, 1, 8, resetFilters);
     setProducts(data.products);
+    setTotalProducts(data.totalProducts);
   };
 
   return (
@@ -99,6 +102,7 @@ export default function ProductsPage({ params }) {
             onClose={() => setIsFilterOpen(false)}
             filters={filters} 
             setFilters={setFilters} 
+            resetKey={priceResetKey}
             onApply={handleApplyFilter} 
             onReset={handleResetFilter}
           />
@@ -119,6 +123,7 @@ export default function ProductsPage({ params }) {
             onClose={() => setIsFilterOpen(false)} 
             filters={filters}
             setFilters={setFilters}
+            resetKey={priceResetKey}
             onApply={handleApplyFilter}
             onReset={handleResetFilter}
           />
