@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getFiltersByCategory } from "../../services/categoryAttributeService";
 
 
-export default function FilterSidebar({ categoryId, categoryName, priceGroupName = "price", isOpen, onClose, filters = { minPrice: null, maxPrice: null, attributeValueIds: [] }, setFilters, onApply, onReset }) {
+export default function FilterSidebar({ categoryId, categoryName, priceGroupName = "price", isOpen, onClose, filters = { minPrice: null, maxPrice: null, attributeValueIds: [] }, setFilters, resetKey, onApply, onReset }) {
   
     const [filterGroups, setFilterGroups] = useState([]);
 
@@ -35,12 +35,25 @@ export default function FilterSidebar({ categoryId, categoryName, priceGroupName
 
   // const [filterGroups, setFilterGroups] = useState([]);
   const [price, setPrice] = useState(20000000);
-  // Hàm xử lý thay đổi giá
-  const handlePriceChange = (min, max) => {
+
+  useEffect(() => {
+    setPrice(20000000);
+  }, [resetKey]);
+
+  const handlePricePresetChange = (min, max) => {
     setFilters((prev) => ({
       ...prev,
       minPrice: min,
       maxPrice: max,
+    }));
+  };
+
+  const handlePriceChange = (value) => {
+    setPrice(value);
+    setFilters((prev) => ({
+      ...prev,
+      minPrice: 0,
+      maxPrice: value,
     }));
   };
 
@@ -111,7 +124,7 @@ export default function FilterSidebar({ categoryId, categoryName, priceGroupName
                 type="radio"
                 name={priceGroupName}
                 className="accent-blue-900"
-                onChange={() => handlePriceChange(item.min, item.max)}
+                onChange={() => handlePricePresetChange(item.min, item.max)}
                 checked={filters.minPrice === item.min && filters.maxPrice === item.max}
               />
               {item.label}
@@ -122,7 +135,7 @@ export default function FilterSidebar({ categoryId, categoryName, priceGroupName
             <div className="mb-7">
           <div className="flex items-center justify-between mb-2 text-xs text-gray-600">
             <span>0đ</span>
-            <span>{(filters.maxPrice ?? 20000000).toLocaleString("vi-VN")}đ</span>
+            <span>{price.toLocaleString("vi-VN")}đ</span>
           </div>
           <div className="relative h-6">
             <div className="absolute top-2.5 left-0 right-0 h-1 rounded bg-gray-200" />
@@ -130,7 +143,7 @@ export default function FilterSidebar({ categoryId, categoryName, priceGroupName
               className="absolute top-2.5 h-1 rounded bg-blue-900"
               style={{
                 left: "0%",
-                right: `${100 - ((filters.maxPrice ?? 20000000) / 50000000) * 100}%`,
+                right: `${100 - (price / 50000000) * 100}%`,
               }}
             />
             <input
@@ -138,8 +151,8 @@ export default function FilterSidebar({ categoryId, categoryName, priceGroupName
               min="0"
               max="50000000"
               step="500000"
-              value={filters.maxPrice ?? 20000000}
-              onChange={(event) => handlePriceChange(0, Number(event.target.value))}
+              value={price}
+              onChange={(event) => handlePriceChange(Number(event.target.value))}
               className="absolute inset-0 w-full appearance-none bg-transparent accent-blue-900 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:-translate-y-1.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-900"
               aria-label="Giá tối đa"
             />
