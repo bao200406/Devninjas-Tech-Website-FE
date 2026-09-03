@@ -73,7 +73,7 @@ const handleLogout = async () => {
         { name: "Khách hàng", icon: Users, href: "/admin2/users" },
         { name: "Mã giảm giá", icon: Ticket, href: "/admin2/vouchers" },
         { name: "Danh mục", icon: Tags, href: "/admin2/categories" },
-        { name: "Hóa đơn", icon: FileText, href: "admin2/invoices" },
+        // { name: "Hóa đơn", icon: FileText, href: "admin2/invoices" },
       ],
     },
   ];

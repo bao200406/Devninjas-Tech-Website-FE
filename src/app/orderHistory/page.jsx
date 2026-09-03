@@ -29,12 +29,17 @@ export default function OrderHistoryPage() {
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
 
   // Hàm load dữ liệu từ API
+// Hàm load dữ liệu từ API
   const loadOrders = async (page, status) => {
     setLoading(true);
     try {
       const statusQuery = status === "all" ? "" : status;
       const res = await getOrderByUser({ page, limit: 3, status: statusQuery });
-      setOrders(res.data);
+      
+      // LỌC BỎ DRAFT: Chỉ giữ lại các đơn hàng không phải là "draft"
+      const filteredOrders = res.data.filter(order => order.status !== "draft");
+
+      setOrders(filteredOrders);
       setPagination(res.pagination);
     } catch (err) {
       console.error("Lỗi khi tải đơn hàng:", err);

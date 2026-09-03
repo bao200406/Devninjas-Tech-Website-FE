@@ -635,192 +635,7 @@ export default function Dashboard() {
       {/* Bottom Section: Recent Orders & Activity */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-        {/* Recent Orders Table */}
-        <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
 
-          <div className="p-6 flex items-center justify-between border-b border-slate-50">
-
-            <div>
-
-              <h3 className="font-bold text-slate-900">
-                Đơn hàng gần đây
-              </h3>
-
-              <p className="text-xs text-slate-400">
-                Các giao dịch mới nhất từ cửa hàng của bạn
-              </p>
-
-            </div>
-
-            <button className="flex items-center text-xs font-bold text-slate-900 hover:text-orange-500 transition-colors">
-              Xem tất cả
-              <ArrowUpRight
-                size={14}
-                className="ml-1"
-              />
-            </button>
-
-          </div>
-
-          <div className="overflow-x-auto">
-
-            <table className="w-full text-left border-collapse">
-
-              <thead>
-
-                <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">
-
-                  <th className="px-6 py-4">
-                    Khách hàng
-                  </th>
-
-                  <th className="px-6 py-4">
-                    Mã đơn hàng
-                  </th>
-
-                  <th className="px-6 py-4">
-                    Sản phẩm
-                  </th>
-
-                  <th className="px-6 py-4">
-                    Trạng thái
-                  </th>
-
-                  <th className="px-6 py-4 text-right">
-                    Số tiền
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody className="divide-y divide-slate-50">
-
-                {recentOrders.map((order) => (
-
-                  <tr
-                    key={order.id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-
-                    <td className="px-6 py-4">
-
-                      <div className="flex items-center gap-3">
-
-                        <div
-                          className={`w-8 h-8 rounded-full ${order.color} flex items-center justify-center text-white text-[10px] font-bold`}
-                        >
-                          {order.initials}
-                        </div>
-
-                        <div>
-
-                          <p className="text-sm font-bold text-slate-900">
-                            {order.customer}
-                          </p>
-
-                          <p className="text-xs text-slate-400">
-                            {order.email}
-                          </p>
-
-                        </div>
-
-                      </div>
-
-                    </td>
-
-                    <td className="px-6 py-4 text-xs font-medium text-slate-400">
-                      {order.id}
-                    </td>
-
-                    <td className="px-6 py-4 text-sm font-medium text-slate-600">
-                      {order.product}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <StatusBadge
-                        status={order.status}
-                      />
-                    </td>
-
-                    <td className="px-6 py-4 text-right font-bold text-slate-900">
-                      {order.amount}
-                    </td>
-
-                  </tr>
-
-                ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-        {/* Recent Activity Feed */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-
-          <div className="p-6 flex items-center justify-between border-b border-slate-50">
-
-            <h3 className="font-bold text-slate-900">
-              Hoạt động gần đây
-            </h3>
-
-            <button className="text-xs font-bold text-slate-900 hover:text-orange-500 transition-colors">
-              Xem tất cả
-            </button>
-
-          </div>
-
-          <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-
-            {recentActivity.map(
-              (activity) => (
-
-                <div
-                  key={activity.id}
-                  className="flex gap-4"
-                >
-
-                  <div
-                    className={`w-10 h-10 rounded-xl ${activity.bgColor} flex-shrink-0 flex items-center justify-center`}
-                  >
-
-                    <activity.icon
-                      className={
-                        activity.iconColor
-                      }
-                      size={18}
-                    />
-
-                  </div>
-
-                  <div className="flex flex-col">
-
-                    <h4 className="text-sm font-bold text-slate-900">
-                      {activity.title}
-                    </h4>
-
-                    <p className="text-xs text-slate-400 leading-relaxed mt-0.5">
-                      {activity.desc}
-                    </p>
-
-                    <span className="text-[10px] font-medium text-slate-300 mt-2 uppercase tracking-wider">
-                      {activity.time}
-                    </span>
-
-                  </div>
-
-                </div>
-
-              )
-            )}
-
-          </div>
-
-        </div>
 
       </div>
 
@@ -877,7 +692,7 @@ function StatCard({
 
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
 
         <div
           className={`flex items-center text-xs font-bold ${
@@ -907,7 +722,7 @@ function StatCard({
           so với tháng trước
         </span>
 
-      </div>
+      </div> */}
 
       {/* Decorative Wave */}
       <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-100 to-transparent opacity-20" />
