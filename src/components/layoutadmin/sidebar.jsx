@@ -46,9 +46,9 @@ const handleLogout = async () => {
 };
   const menuGroups = [
     {
-      title: "OVERVIEW",
+      title: "TỔNG QUAN",
       items: [
-        { name: "Dashboard", icon: LayoutDashboard, href: "/admin2/dashboard" },
+        { name: "Bảng điều khiển", icon: LayoutDashboard, href: "/admin2/dashboard" },
         // { name: "Analytics", icon: BarChart3, href: "/admin2/analytics" },
         // { name: "eCommerce", icon: ShoppingCart, href: "admin2/ecommerce" },
         // { name: "CRM", icon: Users, href: "/admin2/crm" },
@@ -57,23 +57,23 @@ const handleLogout = async () => {
       ],
     },
     {
-      title: "COMMERCE",
+      title: "THƯƠNG MẠI",
       items: [
-        { name: "Orders", icon: ShoppingCart, href: "/admin2/orders", badge: 12 },
+        { name: "Đơn hàng", icon: ShoppingCart, href: "/admin2/orders", badge: 12 },
         {
-          name: "Products",
+          name: "Sản phẩm",
           icon: Box,
           hasSubmenu: true,
           submenu: [
-            { name: "List Products", href: "/admin2/products" },
-            { name: "Product Details", href: "admin2/product-details" },
-            { name: "Add Product", href: "/admin2/addproduct" },
+            { name: "Danh sách sản phẩm", href: "/admin2/products" },
+            { name: "Chi tiết sản phẩm", href: "admin2/product-details" },
+            { name: "Thêm sản phẩm", href: "/admin2/addproduct" },
           ],
         },
-        { name: "Customers", icon: Users, href: "/admin2/users" },
-        { name: "Voucher", icon: Ticket, href: "/admin2/vouchers" },
-        { name: "Category", icon: Tags, href: "/admin2/categories" },
-        { name: "Invoices", icon: FileText, href: "admin2/invoices" },
+        { name: "Khách hàng", icon: Users, href: "/admin2/users" },
+        { name: "Mã giảm giá", icon: Ticket, href: "/admin2/vouchers" },
+        { name: "Danh mục", icon: Tags, href: "/admin2/categories" },
+        { name: "Hóa đơn", icon: FileText, href: "admin2/invoices" },
       ],
     },
   ];

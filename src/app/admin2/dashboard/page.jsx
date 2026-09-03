@@ -237,7 +237,22 @@ export default function Dashboard() {
 
         setCategoryData(formattedCategoryData);
         setStats(statsResult.data);
-        setChartData(chartResult.data);
+
+        // Sắp xếp dữ liệu biểu đồ theo ngày từ cũ -> mới
+        const sortedChartData = [...(chartResult.data || [])].sort((a, b) => {
+          const [dayA, monthA] = a.date.split("/").map(Number);
+          const [dayB, monthB] = b.date.split("/").map(Number);
+
+          // So sánh tháng trước
+          if (monthA !== monthB) {
+            return monthA - monthB;
+          }
+
+          // Nếu cùng tháng thì so sánh ngày
+          return dayA - dayB;
+        });
+
+        setChartData(sortedChartData);
 
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
